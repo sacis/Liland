@@ -2,6 +2,7 @@
 # Gera o projeto e compila em Release.
 #   ./scripts/build.sh            → build/Liland.app
 #   ./scripts/build.sh --install  → instala em /Applications e abre (sem deixar cópia em build/)
+#   ./scripts/build.sh --release  → build/Liland.zip, pronto para anexar a uma Release do GitHub
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -28,6 +29,11 @@ if [[ "${1:-}" == "--install" ]]; then
   cp -R "$PRODUCT" /Applications/Liland.app
   open /Applications/Liland.app
   echo "✓ Instalado em /Applications/Liland.app"
+elif [[ "${1:-}" == "--release" ]]; then
+  rm -f build/Liland.zip
+  # ditto preserva a assinatura e os atributos do bundle (o zip comum pode corromper o .app).
+  ditto -c -k --keepParent "$PRODUCT" build/Liland.zip
+  echo "✓ build/Liland.zip"
 else
   cp -R "$PRODUCT" build/Liland.app
   echo "✓ build/Liland.app"
