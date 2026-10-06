@@ -2,6 +2,8 @@
 
 Uma Dynamic Island para o notch do MacBook, integrada ao **Spotify** e ao **Apple Music**.
 
+**[⬇️ Baixar o Liland](https://github.com/sacis/Liland/releases/latest/download/Liland.zip)** (não use o botão verde "Code", ele baixa o código-fonte). Veja abaixo como [instalar](#instalação).
+
 - Com música tocando, o notch cresce e mostra a capa do álbum e um equalizador.
 - Ao passar o mouse, abre um player com a música, o artista, a barra de progresso e os controles.
 - Não precisa de login: o Liland lê direto dos apps do Spotify e do Música.
