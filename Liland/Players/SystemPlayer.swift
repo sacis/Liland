@@ -22,23 +22,39 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
+    enum Access: Equatable {
+        /// The helper can't run here, e.g. a future macOS without Perl.
+        case unavailable
+        /// A downloaded copy whose helper the user hasn't allowed yet.
+        case needsApproval
+        /// The user chose to turn it on; macOS holds the helper until they click
+        /// Open Anyway in Privacy & Security.
+        case awaitingApproval
+        case ready
+    }
+
     /// Without artwork after this long, the track is shown without it (it can still arrive later).
     private static let artworkWait: TimeInterval = 1.5
-    /// The macOS version on which the adapter last reported something, see `isKnownToWork`.
+    /// How long the helper may wait for the user to allow it in Privacy & Security.
+    private static let approvalPatience: TimeInterval = 600
+    /// The macOS version on which the helper last reported something, see `isKnownToWork`.
     private static let workingSystemKey = "systemNowPlayingWorksOn"
+    /// The helper build the user allowed, so it isn't asked for again until it changes.
+    private static let approvedHelperKey = "approvedNowPlayingHelper"
 
     let id = "system"
     let permissionDenied = false
 
     private(set) var snapshot: PlayerSnapshot?
+    private(set) var access = Access.unavailable
     private var app: SourceApp?
 
-    /// True once the adapter has reported media on this version of macOS, so the island
+    /// True once the helper has reported media on this version of macOS, so the island
     /// can say that any app works. Reset by a macOS update, which may have closed the way.
     private(set) var isKnownToWork: Bool
 
     @ObservationIgnored var onChange: (() -> Void)?
-    @ObservationIgnored private let adapter: MediaRemoteAdapter?
+    @ObservationIgnored private let bridge: MediaRemoteBridge?
     @ObservationIgnored private let ignoredBundleIdentifiers: Set<String>
     @ObservationIgnored private var artworkData: Data?
     @ObservationIgnored private var artworkImage: NSImage?
@@ -51,15 +67,62 @@ final class SystemPlayer: MusicPlayer {
     var isInstalled: Bool { app?.url != nil }
     var isRunning: Bool { snapshot != nil }
 
-    init(ignoring bundleIdentifiers: Set<String>, adapter: MediaRemoteAdapter? = MediaRemoteAdapter()) {
+    init(ignoring bundleIdentifiers: Set<String>, bridge: MediaRemoteBridge? = MediaRemoteBridge()) {
         ignoredBundleIdentifiers = bundleIdentifiers
-        self.adapter = adapter
+        self.bridge = bridge
         isKnownToWork = UserDefaults.standard.string(forKey: Self.workingSystemKey) == Self.systemVersion
     }
 
     func start() {
-        adapter?.onUpdate = { [weak self] state in self?.apply(state) }
-        adapter?.start()
+        guard let bridge else { return }
+        bridge.onUpdate = { [weak self] state, artwork in self?.apply(state, artwork: artwork) }
+        bridge.onReady = { [weak self] in self?.helperAnswered() }
+        bridge.onStuck = { [weak self] in self?.helperStuck() }
+
+        // Never load an unapproved helper on its own: macOS would show its alert out of the blue.
+        if bridge.isQuarantined && UserDefaults.standard.string(forKey: Self.approvedHelperKey) != bridge.helperIdentity {
+            access = .needsApproval
+        } else {
+            access = .ready
+            bridge.start()
+        }
+    }
+
+    // MARK: - Allowing the helper
+
+    /// Loads the helper, which makes macOS show its alert, then opens Privacy & Security
+    /// where the user clicks Open Anyway, as they did for Liland itself.
+    func turnOn() {
+        guard access == .needsApproval, let bridge else { return }
+        access = .awaitingApproval
+        bridge.start(patience: Self.approvalPatience)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard self?.access == .awaitingApproval else { return }
+            Self.openPrivacySettings()
+        }
+    }
+
+    static func openPrivacySettings() {
+        guard let url = URL(string: "x-apple.systempreferences:com.apple.preference.security") else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    private func helperAnswered() {
+        if let bridge, bridge.isQuarantined {
+            UserDefaults.standard.set(bridge.helperIdentity, forKey: Self.approvedHelperKey)
+        }
+        access = .ready
+    }
+
+    /// Stuck before its first answer: in a downloaded copy, macOS is holding it for approval
+    /// (a new Liland version brings a new helper); otherwise this way doesn't work here.
+    private func helperStuck() {
+        if let bridge, bridge.isQuarantined {
+            UserDefaults.standard.removeObject(forKey: Self.approvedHelperKey)
+            access = .needsApproval
+        } else {
+            access = .unavailable
+        }
     }
 
     /// The stream is live, so there is nothing to ask for.
@@ -67,7 +130,7 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Reading state
 
-    private func apply(_ state: [String: Any]) {
+    private func apply(_ state: [String: Any], artwork: Data?) {
         guard let reporting = state["bundleIdentifier"] as? String,
               let title = state["title"] as? String
         else {
@@ -91,17 +154,21 @@ final class SystemPlayer: MusicPlayer {
             title: title,
             artist: artist,
             album: album,
-            duration: Self.seconds(state["durationMicros"]) ?? 0,
+            duration: Self.number(state["duration"]) ?? 0,
             artworkURL: nil
         )
-        let timestamp = Self.seconds(state["timestampEpochMicros"]).map(Date.init(timeIntervalSince1970:))
+        let timestamp = Self.number(state["timestamp"]).map(Date.init(timeIntervalSince1970:))
+        // MediaRemote's shuffle modes: 1 off, 2 albums, 3 songs. Many players don't report one.
+        let shuffleMode = Self.number(state["shuffleMode"]).map(Int.init)
         let snapshot = PlayerSnapshot(
             track: track,
             isPlaying: state["playing"] as? Bool ?? false,
-            position: Self.seconds(state["elapsedTimeMicros"]) ?? 0,
-            positionDate: timestamp ?? Date()
+            position: Self.number(state["elapsedTime"]) ?? 0,
+            positionDate: timestamp ?? Date(),
+            isShuffling: shuffleMode.flatMap { (1...3).contains($0) ? $0 != 1 : nil },
+            repeatMode: Self.number(state["repeatMode"]).flatMap { RepeatMode(mediaRemoteValue: Int($0)) }
         )
-        update(app: app, snapshot: snapshot, artworkData: state["artworkData"] as? Data)
+        update(app: app, snapshot: snapshot, artworkData: artwork)
     }
 
     private func update(app: SourceApp?, snapshot: PlayerSnapshot?, artworkData: Data?) {
@@ -130,8 +197,8 @@ final class SystemPlayer: MusicPlayer {
         ProcessInfo.processInfo.operatingSystemVersionString
     }
 
-    private static func seconds(_ micros: Any?) -> TimeInterval? {
-        (micros as? NSNumber).map { $0.doubleValue / 1_000_000 }
+    private static func number(_ value: Any?) -> Double? {
+        (value as? NSNumber)?.doubleValue
     }
 
     private static func sourceApp(_ bundleID: String, reporting: String) -> SourceApp {
@@ -188,15 +255,15 @@ final class SystemPlayer: MusicPlayer {
             self.snapshot = snapshot
             onChange?()
         }
-        adapter?.send(.togglePlayPause)
+        bridge?.send(.togglePlayPause)
     }
 
     func nextTrack() {
-        adapter?.send(.nextTrack)
+        bridge?.send(.nextTrack)
     }
 
     func previousTrack() {
-        adapter?.send(.previousTrack)
+        bridge?.send(.previousTrack)
     }
 
     func seek(to seconds: TimeInterval) {
@@ -206,7 +273,28 @@ final class SystemPlayer: MusicPlayer {
             self.snapshot = snapshot
             onChange?()
         }
-        adapter?.seek(to: seconds)
+        bridge?.send(.seek(seconds))
+    }
+
+    func toggleShuffle() {
+        guard var snapshot, let isShuffling = snapshot.isShuffling else { return }
+        snapshot.isShuffling = !isShuffling
+        self.snapshot = snapshot
+        onChange?()
+        bridge?.send(.shuffle(!isShuffling))
+    }
+
+    func cycleRepeat() {
+        guard var snapshot, let mode = snapshot.repeatMode else { return }
+        let next: RepeatMode = switch mode {
+        case .off: .all
+        case .all: .one
+        case .one: .off
+        }
+        snapshot.repeatMode = next
+        self.snapshot = snapshot
+        onChange?()
+        bridge?.send(.repeatMode(next))
     }
 
     // MARK: - App

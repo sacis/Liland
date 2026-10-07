@@ -22,5 +22,9 @@ protocol MusicPlayer: AnyObject {
     func nextTrack()
     func previousTrack()
     func seek(to seconds: TimeInterval)
+    /// Does nothing when the snapshot has no shuffle state.
+    func toggleShuffle()
+    /// Off → all → one → off. Does nothing when the snapshot has no repeat mode.
+    func cycleRepeat()
     func open()
 }

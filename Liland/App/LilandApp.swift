@@ -47,9 +47,17 @@ private struct MenuContent: View {
                 LaunchAtLogin.set(enabled)
                 launchAtLogin = LaunchAtLogin.isEnabled
             }
+        switch nowPlaying.systemPlayer.access {
+        case .needsApproval:
+            Button("Turn On Deezer and Browsers…", action: nowPlaying.systemPlayer.turnOn)
+        case .awaitingApproval:
+            Button("Turn On Deezer and Browsers…", action: SystemPlayer.openPrivacySettings)
+        case .unavailable, .ready:
+            EmptyView()
+        }
         Divider()
-        ForEach(nowPlaying.players.filter(\.isInstalled)) { player in
-            Button("Open \(player.displayName)", action: player.open)
+        ForEach(nowPlaying.players.filter(\.isInstalled), id: \.id) { player in
+            Button("Open \(player.displayName)") { player.open() }
         }
         Divider()
         Button("Quit Liland") { NSApp.terminate(nil) }

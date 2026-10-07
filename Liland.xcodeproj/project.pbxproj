@@ -7,8 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0707E3461C96430EE790F5A0 /* MusicPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F05A7C06D17989F1F3CABF8C /* MusicPlayer.swift */; };
 		0D917EFA99A85B37B626E92C /* NotchPanel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CAD750884927DACAA9DBE8C /* NotchPanel.swift */; };
 		130042E12DDB5579F6CF74A9 /* ScriptablePlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229DBAF71099822A87E16D6C /* ScriptablePlayer.swift */; };
+		19C8D7F46868DC64902AACFF /* SystemPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A350984CDFDA7AC1898D373A /* SystemPlayer.swift */; };
 		1B848A4742C874109745E7ED /* LilandApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEAD58EA9C0B582FE66B13A0 /* LilandApp.swift */; };
 		1C5930BDB8F92C207009C88D /* NotchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DED12A053A44F62506EEF72F /* NotchWindowController.swift */; };
 		21EF4F23239237EECB2F730B /* ExpandedPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B24F5112B537B426A38030E /* ExpandedPlayerView.swift */; };
@@ -16,9 +18,12 @@
 		367F4747C41A0AFA7E2BBD45 /* CompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB13F37F9B9EAF58597F240 /* CompactView.swift */; };
 		3BA741F6C43DA949C63FA3FD /* PlayerSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12DBA774EAB396F6A0CB6317 /* PlayerSnapshot.swift */; };
 		3F295198872F2CA6FB252AF6 /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */; };
+		4177406E15EA36B9EC047E27 /* LICENSE in Resources */ = {isa = PBXBuildFile; fileRef = CDBDFBFE63B99D1216966060 /* LICENSE */; };
 		4B4594F49040A81701D13C43 /* ArtworkColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */; };
 		50509B0F293028771F6C953E /* EqualizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 933D4CC8C9F99BE37DECCCB8 /* EqualizerView.swift */; };
+		57787CC8EFBD220A6F4181F9 /* AppKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6E7C3643B6206208221CAED7 /* AppKit.framework */; };
 		5A507CCD2FC9F7666764E25B /* NotchShape.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49C833CE0B295DEEF4C9228D /* NotchShape.swift */; };
+		658380E51D4D641899E9FCB8 /* NowPlayingHelper.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3F9BE778BC1B2C026AB98CD7 /* NowPlayingHelper.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		67F91FFAD566562043188837 /* AudioCapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0A42922862627492394AE3 /* AudioCapturePermission.swift */; };
 		6A0D3B9E2D7F537460091648 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA1C1059B724FEF3406BDAE /* Preferences.swift */; };
 		73D387658B9AA5B4E9D5664D /* AudioLevelMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */; };
@@ -26,17 +31,45 @@
 		89DFB1948B7CEF0D1A33CD01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B25549D533DC4300E7A5B76D /* Assets.xcassets */; };
 		944D2205A02A52BFBE5F7E77 /* NowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBD7351A8824EE332393AD /* NowPlayingController.swift */; };
 		9A5BE177F373ACDCC05BF3FA /* MessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E49C768173AE41D83280AC9 /* MessageView.swift */; };
+		9D55F7E47643BD8B445EBDD7 /* NowPlayingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 402C688F8C2810EF157EE11E /* NowPlayingHelper.m */; };
 		A7C1A28483D12D2D99698F9A /* PlayerDefinition.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B4884C9C653EA6B7DAAE7B0 /* PlayerDefinition.swift */; };
 		B12747F545FE8ABEC4DEE148 /* NotchGeometry.swift in Sources */ = {isa = PBXBuildFile; fileRef = C42CEDA11EF0BD97D74F3EDC /* NotchGeometry.swift */; };
 		BCE369476FFAEE78AA348C65 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51642E39018CE68416E232D7 /* AppDelegate.swift */; };
 		D6D6BFB47E8229C4A8B4E00A /* LiveLevels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8CABE0F211DB534B2132BE /* LiveLevels.swift */; };
 		D6EC4990F1EFB997A1B0FD1E /* PlaybackProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B129AA8581E1B12167E00877 /* PlaybackProgressView.swift */; };
 		DAD0346B81366456C2180D0F /* NotchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3066ADF51C235F01B0C8C3 /* NotchViewModel.swift */; };
+		DFDD2F6224E88FA4CBC97E97 /* now-playing.pl in Resources */ = {isa = PBXBuildFile; fileRef = 73365F446D041D0854D350EB /* now-playing.pl */; };
+		F1F5EBD256AB9C4996C3A896 /* MediaRemoteBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99BA621A790383442F76407 /* MediaRemoteBridge.swift */; };
+		F33E93ED21B41437CF55E171 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EB1E93B5D71C525AF702A47 /* Foundation.framework */; };
 		F6AAC0A78A43DCCEA20A2B52 /* ProcessAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */; };
 		F8C6F9722DCB8C5A18CB8DA8 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0BBF6F76E533C83133A2FA59 /* Localizable.strings */; };
 		FBA8DBC2E1A6FFD063AF852C /* AppleScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21358E5D764C5D63D0CE150 /* AppleScript.swift */; };
 		FBD7F8A2A05334C0128E5D40 /* ArtworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FF7F79C0D27F92FA2FDE57E /* ArtworkView.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		D481B67D7C872A4F80C12853 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 7CAF110AAEF056DB80B9D8F8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 96489ADED3EB1A72992A354E;
+			remoteInfo = NowPlayingHelper;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		14B861A965AA1B3FAA1F2F2A /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				658380E51D4D641899E9FCB8 /* NowPlayingHelper.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		01C158E568F60AB85A5BF5FF /* zh-Hant */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hant"; path = "zh-Hant.lproj/Localizable.strings"; sourceTree = "<group>"; };
@@ -51,6 +84,8 @@
 		2B00F6063F0C1730446111FC /* Liland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B4884C9C653EA6B7DAAE7B0 /* PlayerDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDefinition.swift; sourceTree = "<group>"; };
 		3E49C768173AE41D83280AC9 /* MessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageView.swift; sourceTree = "<group>"; };
+		3F9BE778BC1B2C026AB98CD7 /* NowPlayingHelper.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = NowPlayingHelper.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		402C688F8C2810EF157EE11E /* NowPlayingHelper.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NowPlayingHelper.m; sourceTree = "<group>"; };
 		41021CA35311FD272C3E2E3D /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		416009D957FD9DAC9E2A207A /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/Localizable.strings; sourceTree = "<group>"; };
 		418E00DD8A277EB447BD0199 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -73,6 +108,8 @@
 		6B24F5112B537B426A38030E /* ExpandedPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandedPlayerView.swift; sourceTree = "<group>"; };
 		6CAD750884927DACAA9DBE8C /* NotchPanel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchPanel.swift; sourceTree = "<group>"; };
 		6CBB4EEF880C6585FFA85C15 /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		6E7C3643B6206208221CAED7 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		73365F446D041D0854D350EB /* now-playing.pl */ = {isa = PBXFileReference; lastKnownFileType = text.script.perl; path = "now-playing.pl"; sourceTree = "<group>"; };
 		7BA1C1059B724FEF3406BDAE /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLevelMonitor.swift; sourceTree = "<group>"; };
 		8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
@@ -81,7 +118,9 @@
 		8780260BAEB824A7A8136E78 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		933D4CC8C9F99BE37DECCCB8 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		9BD117C6662A9713A9AE94E7 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
+		9EB1E93B5D71C525AF702A47 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		9F3D252EA666078CF65F61B6 /* it */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A350984CDFDA7AC1898D373A /* SystemPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemPlayer.swift; sourceTree = "<group>"; };
 		AE3066ADF51C235F01B0C8C3 /* NotchViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchViewModel.swift; sourceTree = "<group>"; };
 		AFB13F37F9B9EAF58597F240 /* CompactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CompactView.swift; sourceTree = "<group>"; };
 		AFE05D761E6082F1B30CD596 /* sv */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sv; path = sv.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -92,6 +131,8 @@
 		C42BE32D90E503B93665C728 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		C42CEDA11EF0BD97D74F3EDC /* NotchGeometry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchGeometry.swift; sourceTree = "<group>"; };
 		C592C1D39FFDEBFE0B4536F4 /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C99BA621A790383442F76407 /* MediaRemoteBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRemoteBridge.swift; sourceTree = "<group>"; };
+		CDBDFBFE63B99D1216966060 /* LICENSE */ = {isa = PBXFileReference; path = LICENSE; sourceTree = "<group>"; };
 		CF067F542CB812044A1AB1CE /* Liland.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Liland.entitlements; sourceTree = "<group>"; };
 		CF10783F1695922A6A3A1688 /* ko */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ko; path = ko.lproj/Localizable.strings; sourceTree = "<group>"; };
 		D21358E5D764C5D63D0CE150 /* AppleScript.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppleScript.swift; sourceTree = "<group>"; };
@@ -104,12 +145,25 @@
 		ECCC30D1521CCC4581B1B022 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		EE19ABF6EA786E24C7E082CF /* da */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = da; path = da.lproj/Localizable.strings; sourceTree = "<group>"; };
 		EE7170E6026421586497868D /* nl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = nl; path = nl.lproj/Localizable.strings; sourceTree = "<group>"; };
+		F05A7C06D17989F1F3CABF8C /* MusicPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicPlayer.swift; sourceTree = "<group>"; };
 		F8D8B7844B0A990EEC90CC2E /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FA080F6ECC38B69D5399003D /* pt-BR */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-BR"; path = "pt-BR.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FAD7EB6EB3D6ABDE63102980 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC4C836897F609BFB1030610 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		FEAD58EA9C0B582FE66B13A0 /* LilandApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LilandApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		EDE075832D86ABBD1F7C0948 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F33E93ED21B41437CF55E171 /* Foundation.framework in Frameworks */,
+				57787CC8EFBD220A6F4181F9 /* AppKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0CC1C862FD74BE3EF888B0A2 /* Liland */ = {
@@ -149,6 +203,16 @@
 			path = Audio;
 			sourceTree = "<group>";
 		};
+		4C037FE0BD35C26515D62ABA /* NowPlayingHelper */ = {
+			isa = PBXGroup;
+			children = (
+				CDBDFBFE63B99D1216966060 /* LICENSE */,
+				73365F446D041D0854D350EB /* now-playing.pl */,
+				402C688F8C2810EF157EE11E /* NowPlayingHelper.m */,
+			);
+			path = NowPlayingHelper;
+			sourceTree = "<group>";
+		};
 		4E2D0AE63A5EF41746C3D2C4 /* Views */ = {
 			isa = PBXGroup;
 			children = (
@@ -167,14 +231,26 @@
 			isa = PBXGroup;
 			children = (
 				0CC1C862FD74BE3EF888B0A2 /* Liland */,
+				4C037FE0BD35C26515D62ABA /* NowPlayingHelper */,
+				512DE6FDE34886CA226BFCCF /* Frameworks */,
 				84DB3B0071AB5073B631A0FC /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		512DE6FDE34886CA226BFCCF /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				6E7C3643B6206208221CAED7 /* AppKit.framework */,
+				9EB1E93B5D71C525AF702A47 /* Foundation.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		84DB3B0071AB5073B631A0FC /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				2B00F6063F0C1730446111FC /* Liland.app */,
+				3F9BE778BC1B2C026AB98CD7 /* NowPlayingHelper.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -206,10 +282,13 @@
 			children = (
 				D21358E5D764C5D63D0CE150 /* AppleScript.swift */,
 				81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */,
+				C99BA621A790383442F76407 /* MediaRemoteBridge.swift */,
+				F05A7C06D17989F1F3CABF8C /* MusicPlayer.swift */,
 				D6BBD7351A8824EE332393AD /* NowPlayingController.swift */,
 				2B4884C9C653EA6B7DAAE7B0 /* PlayerDefinition.swift */,
 				12DBA774EAB396F6A0CB6317 /* PlayerSnapshot.swift */,
 				229DBAF71099822A87E16D6C /* ScriptablePlayer.swift */,
+				A350984CDFDA7AC1898D373A /* SystemPlayer.swift */,
 			);
 			path = Players;
 			sourceTree = "<group>";
@@ -217,16 +296,37 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		96489ADED3EB1A72992A354E /* NowPlayingHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0EC791AC15136E2C1CC89D4 /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */;
+			buildPhases = (
+				65660C9CF5F15CD064D43B2C /* Sources */,
+				3CC369892664D3A5194705E8 /* Resources */,
+				EDE075832D86ABBD1F7C0948 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = NowPlayingHelper;
+			packageProductDependencies = (
+			);
+			productName = NowPlayingHelper;
+			productReference = 3F9BE778BC1B2C026AB98CD7 /* NowPlayingHelper.framework */;
+			productType = "com.apple.product-type.framework";
+		};
 		E7BA04E936E11F88F974A38C /* Liland */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = ECDB26B70E136657E31B269A /* Build configuration list for PBXNativeTarget "Liland" */;
 			buildPhases = (
 				DE9374E039C93249F9A31FD1 /* Sources */,
 				9CFA5BD2790C0EDAE415EFCB /* Resources */,
+				14B861A965AA1B3FAA1F2F2A /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6509F49BB371C86371552A9B /* PBXTargetDependency */,
 			);
 			name = Liland;
 			packageProductDependencies = (
@@ -244,6 +344,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					96489ADED3EB1A72992A354E = {
+						ProvisioningStyle = Manual;
+					};
 					E7BA04E936E11F88F974A38C = {
 						ProvisioningStyle = Manual;
 					};
@@ -283,11 +386,20 @@
 			projectRoot = "";
 			targets = (
 				E7BA04E936E11F88F974A38C /* Liland */,
+				96489ADED3EB1A72992A354E /* NowPlayingHelper */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		3CC369892664D3A5194705E8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4177406E15EA36B9EC047E27 /* LICENSE in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		9CFA5BD2790C0EDAE415EFCB /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -295,12 +407,21 @@
 				89DFB1948B7CEF0D1A33CD01 /* Assets.xcassets in Resources */,
 				328CF42C91077B2C2828D947 /* InfoPlist.strings in Resources */,
 				F8C6F9722DCB8C5A18CB8DA8 /* Localizable.strings in Resources */,
+				DFDD2F6224E88FA4CBC97E97 /* now-playing.pl in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		65660C9CF5F15CD064D43B2C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9D55F7E47643BD8B445EBDD7 /* NowPlayingHelper.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		DE9374E039C93249F9A31FD1 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -316,7 +437,9 @@
 				21EF4F23239237EECB2F730B /* ExpandedPlayerView.swift in Sources */,
 				1B848A4742C874109745E7ED /* LilandApp.swift in Sources */,
 				D6D6BFB47E8229C4A8B4E00A /* LiveLevels.swift in Sources */,
+				F1F5EBD256AB9C4996C3A896 /* MediaRemoteBridge.swift in Sources */,
 				9A5BE177F373ACDCC05BF3FA /* MessageView.swift in Sources */,
+				0707E3461C96430EE790F5A0 /* MusicPlayer.swift in Sources */,
 				B12747F545FE8ABEC4DEE148 /* NotchGeometry.swift in Sources */,
 				0D917EFA99A85B37B626E92C /* NotchPanel.swift in Sources */,
 				7CED3778AC950604788379AE /* NotchRootView.swift in Sources */,
@@ -331,10 +454,19 @@
 				F6AAC0A78A43DCCEA20A2B52 /* ProcessAudioTap.swift in Sources */,
 				130042E12DDB5579F6CF74A9 /* ScriptablePlayer.swift in Sources */,
 				3F295198872F2CA6FB252AF6 /* SpectrumAnalyzer.swift in Sources */,
+				19C8D7F46868DC64902AACFF /* SystemPlayer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6509F49BB371C86371552A9B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 96489ADED3EB1A72992A354E /* NowPlayingHelper */;
+			targetProxy = D481B67D7C872A4F80C12853 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		0BBF6F76E533C83133A2FA59 /* Localizable.strings */ = {
@@ -452,6 +584,58 @@
 			};
 			name = Release;
 		};
+		592E380F77D12EC3A6646721 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flaviasilva.Liland.NowPlayingHelper;
+				PRODUCT_NAME = NowPlayingHelper;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		A4AA4C6AE9E43A5010A575C2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = NO;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				GENERATE_INFOPLIST_FILE = YES;
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.flaviasilva.Liland.NowPlayingHelper;
+				PRODUCT_NAME = NowPlayingHelper;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
 		C9F02EE10D3D868C93D8C148 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -565,6 +749,15 @@
 			buildConfigurations = (
 				C9F02EE10D3D868C93D8C148 /* Debug */,
 				0FC8C241D91A6583627345D6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D0EC791AC15136E2C1CC89D4 /* Build configuration list for PBXNativeTarget "NowPlayingHelper" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A4AA4C6AE9E43A5010A575C2 /* Debug */,
+				592E380F77D12EC3A6646721 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

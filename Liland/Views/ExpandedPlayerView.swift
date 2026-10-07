@@ -27,7 +27,7 @@ struct ExpandedPlayerView: View {
                 .foregroundStyle(.white.opacity(0.5))
             Spacer()
             if let player = nowPlaying.activePlayer, let icon = player.icon {
-                Button(action: player.open) {
+                Button { player.open() } label: {
                     Image(nsImage: icon)
                         .resizable()
                         .frame(width: 16, height: 16)
@@ -63,7 +63,13 @@ struct ExpandedPlayerView: View {
     }
 
     private var controls: some View {
-        HStack(spacing: 36) {
+        HStack(spacing: 26) {
+            modeButton(
+                systemName: "shuffle",
+                isOn: nowPlaying.isShuffling,
+                help: "Shuffle",
+                action: nowPlaying.toggleShuffle
+            )
             ControlButton(systemName: "backward.fill", size: 18, help: "Previous", action: nowPlaying.previousTrack)
             ControlButton(
                 systemName: nowPlaying.isPlaying ? "pause.fill" : "play.fill",
@@ -72,8 +78,33 @@ struct ExpandedPlayerView: View {
                 action: nowPlaying.playPause
             )
             ControlButton(systemName: "forward.fill", size: 18, help: "Next", action: nowPlaying.nextTrack)
+            modeButton(
+                systemName: nowPlaying.repeatMode == .one ? "repeat.1" : "repeat",
+                isOn: nowPlaying.repeatMode.map { $0 != .off },
+                help: "Repeat",
+                action: nowPlaying.cycleRepeat
+            )
         }
         .frame(height: 30)
+    }
+
+    /// Lit in the artwork's color when on. Kept in place but invisible when the player
+    /// doesn't report it (`isOn` nil), so the main controls stay centered.
+    private func modeButton(
+        systemName: String,
+        isOn: Bool?,
+        help: LocalizedStringKey,
+        action: @escaping () -> Void
+    ) -> some View {
+        ControlButton(
+            systemName: systemName,
+            size: 14,
+            help: help,
+            color: isOn == true ? nowPlaying.accentColor : .white.opacity(0.5),
+            action: action
+        )
+        .opacity(isOn == nil ? 0 : 1)
+        .disabled(isOn == nil)
     }
 }
 
@@ -81,6 +112,7 @@ private struct ControlButton: View {
     let systemName: String
     let size: CGFloat
     let help: LocalizedStringKey
+    var color: Color = .white
     let action: () -> Void
 
     @State private var isHovering = false
@@ -90,7 +122,7 @@ private struct ControlButton: View {
             Image(systemName: systemName)
                 .font(.system(size: size, weight: .semibold))
                 .contentTransition(.symbolEffect(.replace))
-                .foregroundStyle(.white.opacity(isHovering ? 1 : 0.85))
+                .foregroundStyle(color.opacity(isHovering ? 1 : 0.85))
                 .frame(width: 40, height: 30)
                 .background(
                     Circle()

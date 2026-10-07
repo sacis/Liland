@@ -106,19 +106,19 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
                 setSnapshot(nil)
             case let state?:
                 isRunning = true
-                setSnapshot(Self.snapshot(from: output, state: state))
+                setSnapshot(snapshot(from: output, state: state))
             }
         }
     }
 
-    private static func snapshot(from output: NSAppleEventDescriptor, state: String) -> PlayerSnapshot {
+    private func snapshot(from output: NSAppleEventDescriptor, state: String) -> PlayerSnapshot {
         func string(_ index: Int) -> String { output.atIndex(index)?.stringValue ?? "" }
         let track = NowPlayingTrack(
             id: string(2),
             title: string(3),
             artist: string(4),
             album: string(5),
-            duration: normalizedDuration(output.atIndex(6)?.doubleValue ?? 0),
+            duration: Self.normalizedDuration(output.atIndex(6)?.doubleValue ?? 0),
             artworkURL: URL(string: string(8))
         )
         return PlayerSnapshot(
@@ -126,7 +126,9 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             // Apple Music also reports "fast forwarding" and "rewinding".
             isPlaying: state != "paused",
             position: output.atIndex(7)?.doubleValue ?? 0,
-            positionDate: Date()
+            positionDate: Date(),
+            isShuffling: Bool(string(9)),
+            repeatMode: definition.repeatMode(from: string(10))
         )
     }
 
@@ -203,6 +205,26 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             setSnapshot(snapshot)
         }
         send("set player position to \(seconds)")
+    }
+
+    func toggleShuffle() {
+        guard var snapshot, let isShuffling = snapshot.isShuffling else { return }
+        snapshot.isShuffling = !isShuffling
+        setSnapshot(snapshot)
+        send(definition.shuffleCommand(!isShuffling))
+    }
+
+    /// Off → all → one → off, like the apps themselves; Spotify has no "one" here.
+    func cycleRepeat() {
+        guard var snapshot, let mode = snapshot.repeatMode else { return }
+        let next: RepeatMode = switch mode {
+        case .off: .all
+        case .all: definition.canRepeatOne ? .one : .off
+        case .one: .off
+        }
+        snapshot.repeatMode = next
+        setSnapshot(snapshot)
+        send(definition.repeatCommand(next))
     }
 
     private func send(_ command: String) {
