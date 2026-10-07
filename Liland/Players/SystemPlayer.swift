@@ -74,6 +74,13 @@ final class SystemPlayer: MusicPlayer {
     @ObservationIgnored private var lastPosition: (trackID: String, elapsed: TimeInterval)?
     @ObservationIgnored private var silenceWork: DispatchWorkItem?
     @ObservationIgnored private var clearWork: DispatchWorkItem?
+    /// Whether each track is music, once known; see `isMusic`.
+    @ObservationIgnored private var musicVerdicts: [String: Bool] = [:]
+    @ObservationIgnored private var checkingTrackIDs: Set<String> = []
+    /// The latest state, held while its browser is asked whether it comes from a music service.
+    @ObservationIgnored private var pending: (trackID: String, state: [String: Any], artwork: Data?)?
+    /// Recent songs' artwork: a song that gets its place back from other media comes without it.
+    @ObservationIgnored private var recentArtwork: [(trackID: String, data: Data)] = []
 
     var audioBundleIdentifier: String? { app?.reportingBundleIdentifier }
     var displayName: String { app?.name ?? "" }
@@ -145,17 +152,19 @@ final class SystemPlayer: MusicPlayer {
     // MARK: - Reading state
 
     private func apply(_ state: [String: Any], artwork: Data?) {
-        // Left out entirely, so the song and its silence check carry on as if it never came.
-        if let duration = Self.number(state["duration"]), duration > 0, duration < Self.shortestMedia {
-            return
-        }
-        silenceWork?.cancel()
-        silenceWork = nil
+        pending = nil
         clearWork?.cancel()
         clearWork = nil
+        // Notification sounds don't need asking whether they're music.
+        if let duration = Self.number(state["duration"]), duration > 0, duration < Self.shortestMedia {
+            otherMediaReported(state)
+            return
+        }
         guard let reporting = state["bundleIdentifier"] as? String,
               let title = state["title"] as? String
         else {
+            silenceWork?.cancel()
+            silenceWork = nil
             scheduleClear()
             return
         }
@@ -163,12 +172,12 @@ final class SystemPlayer: MusicPlayer {
 
         let bundleID = state["parentApplicationBundleIdentifier"] as? String ?? reporting
         if ignoredBundleIdentifiers.contains(bundleID) || ignoredBundleIdentifiers.contains(reporting) {
+            silenceWork?.cancel()
+            silenceWork = nil
             update(app: nil, snapshot: nil, artworkData: nil)
             return
         }
 
-        let app = self.app.flatMap { $0.bundleIdentifier == bundleID && $0.reportingBundleIdentifier == reporting ? $0 : nil }
-            ?? Self.sourceApp(bundleID, reporting: reporting)
         let artist = state["artist"] as? String ?? ""
         let album = state["album"] as? String ?? ""
         let track = NowPlayingTrack(
@@ -179,6 +188,21 @@ final class SystemPlayer: MusicPlayer {
             duration: Self.number(state["duration"]) ?? 0,
             artworkURL: nil
         )
+        switch isMusic(track, from: bundleID) {
+        case nil:
+            pending = (track.id, state, artwork)
+            return
+        case false?:
+            otherMediaReported(state)
+            return
+        case true?:
+            break
+        }
+        silenceWork?.cancel()
+        silenceWork = nil
+
+        let app = self.app.flatMap { $0.bundleIdentifier == bundleID && $0.reportingBundleIdentifier == reporting ? $0 : nil }
+            ?? Self.sourceApp(bundleID, reporting: reporting)
         let timestamp = Self.number(state["timestamp"]).map(Date.init(timeIntervalSince1970:))
         // MediaRemote's shuffle modes: 1 off, 2 albums, 3 songs. Many players don't report one.
         let shuffleMode = Self.number(state["shuffleMode"]).map(Int.init)
@@ -196,10 +220,58 @@ final class SystemPlayer: MusicPlayer {
             isShuffling: shuffleMode.flatMap { (1...3).contains($0) ? $0 != 1 : nil },
             repeatMode: Self.number(state["repeatMode"]).flatMap { RepeatMode(mediaRemoteValue: Int($0)) }
         )
-        // A song that comes back after a notification sound comes without its artwork.
-        let artwork = artwork ?? (self.snapshot?.track.id == track.id ? artworkData : nil)
+        if let artwork { remember(artwork, for: track.id) }
+        let artwork = artwork ?? recentArtwork.last { $0.trackID == track.id }?.data
         update(app: app, snapshot: snapshot, artworkData: artwork)
         if isMoving && !isReportedPlaying {
+            scheduleSilenceCheck()
+        }
+    }
+
+    /// Music services and music apps, not a WhatsApp voice message or an Instagram video.
+    /// Browsers are asked which site the media comes from, once per track; meanwhile this is
+    /// nil and the state waits in `pending`. Elsewhere, music is what names an artist.
+    private func isMusic(_ track: NowPlayingTrack, from bundleID: String) -> Bool? {
+        if let verdict = musicVerdicts[track.id] { return verdict }
+        guard BrowserTab.canInspect(bundleID) else {
+            return record(!track.artist.isEmpty, for: track.id)
+        }
+        guard checkingTrackIDs.insert(track.id).inserted else { return nil }
+        scriptQueue.async { [weak self] in
+            let verdict = BrowserTab.isMusicSite(track, in: bundleID) ?? !track.artist.isEmpty
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.checkingTrackIDs.remove(track.id)
+                self.record(verdict, for: track.id)
+                if let pending = self.pending, pending.trackID == track.id {
+                    self.apply(pending.state, artwork: pending.artwork)
+                }
+            }
+        }
+        return nil
+    }
+
+    @discardableResult
+    private func record(_ verdict: Bool, for trackID: String) -> Bool {
+        if musicVerdicts.count > 500 { musicVerdicts.removeAll() }
+        musicVerdicts[trackID] = verdict
+        return verdict
+    }
+
+    private func remember(_ artwork: Data, for trackID: String) {
+        recentArtwork.removeAll { $0.trackID == trackID }
+        recentArtwork.append((trackID, artwork))
+        if recentArtwork.count > 10 { recentArtwork.removeFirst() }
+    }
+
+    /// Other media holds the system's Now Playing (a voice message, a video, a notification
+    /// sound) and plays over the song, which keeps its place. Nothing comes from the song
+    /// meanwhile, so it only counts as paused once the other media has stopped and the song
+    /// still hasn't come back.
+    private func otherMediaReported(_ state: [String: Any]) {
+        silenceWork?.cancel()
+        silenceWork = nil
+        if state["playing"] as? Bool != true {
             scheduleSilenceCheck()
         }
     }
@@ -317,11 +389,15 @@ final class SystemPlayer: MusicPlayer {
             self.snapshot = snapshot
             onChange?()
         }
+        silenceWork?.cancel()
+        silenceWork = nil
         if shouldPause {
             // A position already on its way mustn't count as still playing.
             lastPosition = nil
-            silenceWork?.cancel()
-            silenceWork = nil
+        } else {
+            // Undone if the song doesn't start, e.g. when Safari sends the command to the
+            // tab that made the last sound, such as WhatsApp Web, instead of the song's.
+            scheduleSilenceCheck()
         }
         bridge?.send(shouldPause ? .pause : .play)
     }
