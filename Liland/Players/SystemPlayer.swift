@@ -35,6 +35,16 @@ final class SystemPlayer: MusicPlayer {
 
     /// Without artwork after this long, the track is shown without it (it can still arrive later).
     private static let artworkWait: TimeInterval = 1.5
+    /// Safari reports some sites, such as Deezer, as paused while they play. They send the
+    /// position twice a second while playing and go quiet once paused, so a moving position
+    /// counts as playing until no update has arrived for this long.
+    private static let positionSilence: TimeInterval = 3
+    /// Notification sounds, such as a new message in WhatsApp Web, briefly take over the
+    /// browser's Now Playing. Media shorter than this isn't music and is ignored.
+    private static let shortestMedia: TimeInterval = 5
+    /// MediaRemote sometimes reports nothing for a split second while the song plays on.
+    /// Nothing has to last this long before the song goes away.
+    private static let emptyPatience: TimeInterval = 1.5
     /// How long the helper may wait for the user to allow it in Privacy & Security.
     private static let approvalPatience: TimeInterval = 600
     /// The macOS version on which the helper last reported something, see `isKnownToWork`.
@@ -56,10 +66,14 @@ final class SystemPlayer: MusicPlayer {
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let bridge: MediaRemoteBridge?
     @ObservationIgnored private let ignoredBundleIdentifiers: Set<String>
+    @ObservationIgnored private let scriptQueue = DispatchQueue(label: "com.flaviasilva.Liland.SystemPlayer")
     @ObservationIgnored private var artworkData: Data?
     @ObservationIgnored private var artworkImage: NSImage?
     @ObservationIgnored private var artworkRequest: (trackID: String, completion: (NSImage?) -> Void)?
     @ObservationIgnored private var deliveredImage: NSImage?
+    @ObservationIgnored private var lastPosition: (trackID: String, elapsed: TimeInterval)?
+    @ObservationIgnored private var silenceWork: DispatchWorkItem?
+    @ObservationIgnored private var clearWork: DispatchWorkItem?
 
     var audioBundleIdentifier: String? { app?.reportingBundleIdentifier }
     var displayName: String { app?.name ?? "" }
@@ -131,10 +145,18 @@ final class SystemPlayer: MusicPlayer {
     // MARK: - Reading state
 
     private func apply(_ state: [String: Any], artwork: Data?) {
+        // Left out entirely, so the song and its silence check carry on as if it never came.
+        if let duration = Self.number(state["duration"]), duration > 0, duration < Self.shortestMedia {
+            return
+        }
+        silenceWork?.cancel()
+        silenceWork = nil
+        clearWork?.cancel()
+        clearWork = nil
         guard let reporting = state["bundleIdentifier"] as? String,
               let title = state["title"] as? String
         else {
-            update(app: nil, snapshot: nil, artworkData: nil)
+            scheduleClear()
             return
         }
         markWorking()
@@ -160,15 +182,52 @@ final class SystemPlayer: MusicPlayer {
         let timestamp = Self.number(state["timestamp"]).map(Date.init(timeIntervalSince1970:))
         // MediaRemote's shuffle modes: 1 off, 2 albums, 3 songs. Many players don't report one.
         let shuffleMode = Self.number(state["shuffleMode"]).map(Int.init)
+        let elapsed = Self.number(state["elapsedTime"]) ?? 0
+        let isReportedPlaying = state["playing"] as? Bool ?? false
+        // A new song can't have moved yet; it carries on from the previous one.
+        let wasPlaying = self.snapshot?.isPlaying ?? false
+        let isMoving = lastPosition.map { $0.trackID == track.id ? $0.elapsed != elapsed : wasPlaying } ?? false
+        lastPosition = (track.id, elapsed)
         let snapshot = PlayerSnapshot(
             track: track,
-            isPlaying: state["playing"] as? Bool ?? false,
-            position: Self.number(state["elapsedTime"]) ?? 0,
+            isPlaying: isReportedPlaying || isMoving,
+            position: elapsed,
             positionDate: timestamp ?? Date(),
             isShuffling: shuffleMode.flatMap { (1...3).contains($0) ? $0 != 1 : nil },
             repeatMode: Self.number(state["repeatMode"]).flatMap { RepeatMode(mediaRemoteValue: Int($0)) }
         )
+        // A song that comes back after a notification sound comes without its artwork.
+        let artwork = artwork ?? (self.snapshot?.track.id == track.id ? artworkData : nil)
         update(app: app, snapshot: snapshot, artworkData: artwork)
+        if isMoving && !isReportedPlaying {
+            scheduleSilenceCheck()
+        }
+    }
+
+    /// Lets the song go once nothing has been reported for a moment, so a blip doesn't hide it.
+    private func scheduleClear() {
+        guard snapshot != nil else {
+            update(app: nil, snapshot: nil, artworkData: nil)
+            return
+        }
+        let work = DispatchWorkItem { [weak self] in
+            self?.clearWork = nil
+            self?.update(app: nil, snapshot: nil, artworkData: nil)
+        }
+        clearWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.emptyPatience, execute: work)
+    }
+
+    /// Shows a site that stopped sending its position as paused.
+    private func scheduleSilenceCheck() {
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, var snapshot = self.snapshot, snapshot.isPlaying else { return }
+            snapshot.isPlaying = false
+            self.snapshot = snapshot
+            self.onChange?()
+        }
+        silenceWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.positionSilence, execute: work)
     }
 
     private func update(app: SourceApp?, snapshot: PlayerSnapshot?, artworkData: Data?) {
@@ -299,8 +358,15 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - App
 
+    /// In a browser, goes straight to the tab the song plays in when it can find it.
     func open() {
-        guard let url = app?.url else { return }
-        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+        guard let app, let url = app.url else { return }
+        let track = snapshot?.track
+        scriptQueue.async {
+            if let track, BrowserTab.show(track, in: app.bundleIdentifier) { return }
+            DispatchQueue.main.async {
+                NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+            }
+        }
     }
 }
