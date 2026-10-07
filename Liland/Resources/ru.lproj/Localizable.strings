@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Показывать при смене трека";
+"Open Only on Click" = "Открывать только по щелчку";
+"Open on Hover" = "Открывать при наведении";
+"Equalizer Follows the Music" = "Эквалайзер следует за музыкой";
+"Allow Audio Access in Settings…" = "Разрешить доступ к звуку в Настройках…";
 "Open at Login" = "Открывать при входе";
 "Open %@" = "Открыть %@";
 "Quit Liland" = "Завершить Liland";
@@ -14,3 +18,11 @@
 "Settings" = "Настройки";
 "Nothing playing" = "Ничего не играет";
 "Play something in Spotify or Apple Music" = "Включите что-нибудь в Spotify или Apple Music";
+"Shuffle" = "Перемешать";
+"Repeat" = "Повтор";
+"Play music in any app or browser" = "Включите музыку в любом приложении или браузере";
+"Show Deezer and browsers too" = "Показывать также Deezer и браузеры";
+"Turn On" = "Включить";
+"Almost there" = "Почти готово";
+"Click Open Anyway in Privacy & Security" = "Нажмите «Всё равно открыть» в «Конфиденциальность и безопасность»";
+"Turn On Deezer and Browsers…" = "Включить Deezer и браузеры…";

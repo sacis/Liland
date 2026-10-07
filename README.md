@@ -1,14 +1,12 @@
 # Liland
 
-Uma Dynamic Island para o notch do MacBook, integrada ao **Spotify** e ao **Apple Music**.
+Uma Dynamic Island para o notch do MacBook, integrada ao **Spotify**, ao **Apple Music** e, depois de [um passo a mais](#deezer-e-navegadores), ao **Deezer**, ao **YouTube** e aos outros players do navegador.
 
 **[⬇️ Baixar o Liland](https://github.com/sacis/Liland/releases/latest/download/Liland.zip)** (não use o botão verde "Code", ele baixa o código-fonte). Veja abaixo como [instalar](#instalação).
 
 - Com música tocando, o notch cresce e mostra a capa do álbum e um equalizador.
-- Ao passar o mouse, abre um player com a música, o artista, a barra de progresso e os controles.
-- Não precisa de login: o Liland lê direto dos apps do Spotify e do Música.
-
-Deezer, Tidal, YouTube Music e players no navegador ainda não são suportados.
+- Ao passar o mouse, abre um player com a música, o artista, a barra de progresso e os controles, incluindo **aleatório** e **repetir** quando o app informa esses modos.
+- Não precisa de login: o Liland lê direto dos apps do Spotify e do Música, e do que o Mac mostra em **Tocando Agora** na Central de Controle para os outros apps e sites.
 
 ## Instalação
 
@@ -44,15 +42,33 @@ Na primeira vez que o Spotify ou o Música estiver aberto, o macOS pergunta se o
 
 Se você negar sem querer, libere depois em **Ajustes do Sistema › Privacidade e Segurança › Automação**.
 
+### Deezer e navegadores
+
+Para mostrar o Deezer, o YouTube, o TIDAL e outros sites e apps, o Liland usa uma peça extra que o Mac pede para você liberar uma vez, do mesmo jeito que liberou o Liland:
+
+1. Com nada tocando, passe o mouse no notch e clique em **Ativar** (ou, no ícone de cápsula, em **Ativar Deezer e navegadores…**).
+2. O Mac avisa que não pôde verificar o "NowPlayingHelper". Feche o aviso (**não** clique em *Mover para o Lixo*).
+3. Os **Ajustes do Sistema** abrem em **Privacidade e Segurança**. Role até o final e, ao lado da mensagem sobre o NowPlayingHelper, clique em **Abrir Mesmo Assim** e confirme com a senha do Mac.
+
+Pronto: o que tocar no Deezer ou no navegador já aparece na ilha. Depois de atualizar o Liland, pode ser preciso repetir esses passos.
+
+Essa parte depende de uma brecha do macOS: desde o macOS 15.4, só programas da Apple podem ver o que está tocando, então o Liland pede ao `perl`, que vem instalado no Mac, para fazer essa leitura. Se uma atualização do macOS fechar essa brecha, o Deezer e os navegadores param de aparecer, mas o Spotify e o Apple Music continuam funcionando normalmente.
+
 ## Opções
 
 No ícone de cápsula da barra de menus:
 
 - **Mostrar ao trocar de música**: abre a ilha por alguns segundos quando a faixa muda.
+- **Abrir só ao clicar**: a ilha deixa de abrir quando o mouse passa por cima e só abre quando você clica no notch. Para voltar ao jeito anterior, clique em **Abrir ao passar o mouse**.
+- **Equalizador acompanha a música**: as barrinhas passam a seguir a batida da música que está tocando (macOS 14.4 ou mais novo). Na primeira vez, o macOS pede permissão para o Liland acessar o áudio. O Liland só mede o som na hora, sem gravar nem salvar nada. Se você negar, as barrinhas continuam com a animação de antes, e o item **Permitir acesso ao áudio nos Ajustes…** aparece no menu para você liberar depois.
 - **Abrir ao iniciar o Mac**
 - **Sair do Liland**
 
 O Liland segue o idioma do Mac e está disponível em 20 idiomas.
+
+## Créditos
+
+A leitura do Deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de Jonas van den Berg e colaboradores, sob a licença BSD de 3 cláusulas (veja [NowPlayingHelper/LICENSE](NowPlayingHelper/LICENSE)).
 
 ## Compilar a partir do código
 

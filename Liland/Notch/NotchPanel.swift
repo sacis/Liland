@@ -25,7 +25,8 @@ final class NotchPanel: NSPanel {
         animationBehavior = .none
     }
 
-    override var canBecomeKey: Bool { true }
+    // Never key: a key panel would take Cmd+C/Cmd+V and other shortcuts away from the front app.
+    override var canBecomeKey: Bool { false }
     override var canBecomeMain: Bool { false }
 }
 

@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Show When the Song Changes";
+"Open Only on Click" = "Open Only on Click";
+"Open on Hover" = "Open on Hover";
+"Equalizer Follows the Music" = "Equalizer Follows the Music";
+"Allow Audio Access in Settings…" = "Allow Audio Access in Settings…";
 "Open at Login" = "Open at Login";
 "Open %@" = "Open %@";
 "Quit Liland" = "Quit Liland";
@@ -14,3 +18,11 @@
 "Settings" = "Settings";
 "Nothing playing" = "Nothing playing";
 "Play something in Spotify or Apple Music" = "Play something in Spotify or Apple Music";
+"Shuffle" = "Shuffle";
+"Repeat" = "Repeat";
+"Play music in any app or browser" = "Play music in any app or browser";
+"Show Deezer and browsers too" = "Show Deezer and browsers too";
+"Turn On" = "Turn On";
+"Almost there" = "Almost there";
+"Click Open Anyway in Privacy & Security" = "Click Open Anyway in Privacy & Security";
+"Turn On Deezer and Browsers…" = "Turn On Deezer and Browsers…";

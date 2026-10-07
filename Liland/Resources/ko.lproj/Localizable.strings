@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "곡이 바뀔 때 표시";
+"Open Only on Click" = "클릭할 때만 열기";
+"Open on Hover" = "포인터를 올리면 열기";
+"Equalizer Follows the Music" = "이퀄라이저가 음악을 따라 움직임";
+"Allow Audio Access in Settings…" = "설정에서 오디오 접근 허용…";
 "Open at Login" = "로그인 시 열기";
 "Open %@" = "%@ 열기";
 "Quit Liland" = "Liland 종료";
@@ -14,3 +18,11 @@
 "Settings" = "설정";
 "Nothing playing" = "재생 중인 항목 없음";
 "Play something in Spotify or Apple Music" = "Spotify 또는 Apple Music에서 재생하세요";
+"Shuffle" = "셔플";
+"Repeat" = "반복";
+"Play music in any app or browser" = "아무 앱이나 브라우저에서 음악을 재생하세요";
+"Show Deezer and browsers too" = "Deezer와 브라우저도 표시";
+"Turn On" = "켜기";
+"Almost there" = "거의 다 됐어요";
+"Click Open Anyway in Privacy & Security" = "개인정보 보호 및 보안에서 '그래도 열기'를 클릭하세요";
+"Turn On Deezer and Browsers…" = "Deezer 및 브라우저 켜기…";

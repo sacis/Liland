@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Tonen bij nieuw nummer";
+"Open Only on Click" = "Alleen openen bij klikken";
+"Open on Hover" = "Openen bij aanwijzen";
+"Equalizer Follows the Music" = "Equalizer volgt de muziek";
+"Allow Audio Access in Settings…" = "Audiotoegang toestaan in Instellingen…";
 "Open at Login" = "Open bij inloggen";
 "Open %@" = "Open %@";
 "Quit Liland" = "Stop Liland";
@@ -14,3 +18,11 @@
 "Settings" = "Instellingen";
 "Nothing playing" = "Er speelt niets";
 "Play something in Spotify or Apple Music" = "Speel iets af in Spotify of Apple Music";
+"Shuffle" = "Shuffle";
+"Repeat" = "Herhaal";
+"Play music in any app or browser" = "Speel muziek af in een app of browser";
+"Show Deezer and browsers too" = "Toon ook Deezer en browsers";
+"Turn On" = "Zet aan";
+"Almost there" = "Bijna klaar";
+"Click Open Anyway in Privacy & Security" = "Klik op ‘Open toch’ in Privacy en beveiliging";
+"Turn On Deezer and Browsers…" = "Zet Deezer en browsers aan…";

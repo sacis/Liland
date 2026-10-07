@@ -8,9 +8,12 @@ import SwiftUI
 final class NowPlayingController {
     static let defaultAccent = Color(red: 0.12, green: 0.84, blue: 0.38)
 
-    let players: [ScriptablePlayer]
+    let players: [any MusicPlayer]
+    /// Every other app that shows in Control Center (Deezer, browsers…), when macOS allows it.
+    let systemPlayer: SystemPlayer
+    let audioLevels = AudioLevelMonitor()
 
-    private(set) var activePlayer: ScriptablePlayer?
+    private(set) var activePlayer: (any MusicPlayer)?
     private(set) var artwork: NSImage?
     private(set) var accentColor = NowPlayingController.defaultAccent
 
@@ -27,11 +30,11 @@ final class NowPlayingController {
     @ObservationIgnored private var artworkKey: String?
     @ObservationIgnored private let startDate = Date()
 
-    init(players: [ScriptablePlayer] = [
-        ScriptablePlayer(definition: .spotify),
-        ScriptablePlayer(definition: .appleMusic),
-    ]) {
-        self.players = players
+    init(scriptable definitions: [PlayerDefinition] = [.spotify, .appleMusic]) {
+        let scriptable = definitions.map(ScriptablePlayer.init(definition:))
+        systemPlayer = SystemPlayer(ignoring: Set(definitions.map(\.bundleIdentifier)))
+        // Last, so that on a tie the apps read directly win.
+        players = scriptable + [systemPlayer]
     }
 
     func start() {
@@ -49,18 +52,20 @@ final class NowPlayingController {
 
     var track: NowPlayingTrack? { activePlayer?.snapshot?.track }
     var isPlaying: Bool { activePlayer?.snapshot?.isPlaying ?? false }
+    var isShuffling: Bool? { activePlayer?.snapshot?.isShuffling }
+    var repeatMode: RepeatMode? { activePlayer?.snapshot?.repeatMode }
 
     func currentPosition(at date: Date) -> TimeInterval {
         activePlayer?.snapshot?.elapsed(at: date) ?? 0
     }
 
     /// A running player Liland isn't allowed to read, to explain why nothing shows.
-    var deniedPlayer: ScriptablePlayer? {
+    var deniedPlayer: (any MusicPlayer)? {
         players.first { $0.isRunning && $0.permissionDenied }
     }
 
     /// The player to offer when nothing is playing: the one used last, else the first installed.
-    var preferredPlayer: ScriptablePlayer? {
+    var preferredPlayer: (any MusicPlayer)? {
         mostRecent(players.filter(\.isInstalled))
     }
 
@@ -70,6 +75,8 @@ final class NowPlayingController {
     func nextTrack() { activePlayer?.nextTrack() }
     func previousTrack() { activePlayer?.previousTrack() }
     func seek(to seconds: TimeInterval) { activePlayer?.seek(to: seconds) }
+    func toggleShuffle() { activePlayer?.toggleShuffle() }
+    func cycleRepeat() { activePlayer?.cycleRepeat() }
 
     // MARK: - Choosing the active player
 
@@ -88,6 +95,7 @@ final class NowPlayingController {
         if chosen !== activePlayer {
             activePlayer = chosen
         }
+        audioLevels.follow(bundleID: chosen?.audioBundleIdentifier, isPlaying: isPlaying)
 
         let key = chosen.flatMap { player in player.snapshot.map { "\(player.id)|\($0.track.id)" } }
         if key != artworkKey {
@@ -98,8 +106,8 @@ final class NowPlayingController {
     }
 
     /// Most recent activity wins; ties keep the order of `players` (Spotify first).
-    private func mostRecent(_ candidates: [ScriptablePlayer]) -> ScriptablePlayer? {
-        var best: ScriptablePlayer?
+    private func mostRecent(_ candidates: [any MusicPlayer]) -> (any MusicPlayer)? {
+        var best: (any MusicPlayer)?
         var bestDate = Date.distantPast
         for player in candidates {
             let date = lastActivity[player.id] ?? .distantPast
@@ -116,11 +124,16 @@ final class NowPlayingController {
         accentColor = Self.defaultAccent
         guard key != nil, let player = activePlayer, let track = player.snapshot?.track else { return }
 
+        // Some players deliver the artwork more than once; announce the song only the first time.
+        var announce = announce
         player.loadArtwork(for: track) { [weak self] image in
             guard let self, self.artworkKey == key else { return }
             self.artwork = image
             self.accentColor = image.flatMap(ArtworkColor.accent(for:)).map(Color.init(nsColor:)) ?? Self.defaultAccent
-            if announce { self.onTrackChange?() }
+            if announce {
+                announce = false
+                self.onTrackChange?()
+            }
         }
     }
 }

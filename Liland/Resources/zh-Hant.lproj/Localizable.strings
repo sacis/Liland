@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "切換歌曲時顯示";
+"Open Only on Click" = "僅在按一下時打開";
+"Open on Hover" = "游標停留時打開";
+"Equalizer Follows the Music" = "等化器跟隨音樂";
+"Allow Audio Access in Settings…" = "在「設定」中允許取用音訊…";
 "Open at Login" = "登入時打開";
 "Open %@" = "打開%@";
 "Quit Liland" = "結束 Liland";
@@ -14,3 +18,11 @@
 "Settings" = "設定";
 "Nothing playing" = "未在播放";
 "Play something in Spotify or Apple Music" = "在 Spotify 或 Apple Music 中播放內容";
+"Shuffle" = "隨機播放";
+"Repeat" = "重複播放";
+"Play music in any app or browser" = "在任何 App 或瀏覽器中播放音樂";
+"Show Deezer and browsers too" = "同時顯示 Deezer 和瀏覽器";
+"Turn On" = "開啟";
+"Almost there" = "就快好了";
+"Click Open Anyway in Privacy & Security" = "請在「隱私權與安全性」中按一下「強制打開」";
+"Turn On Deezer and Browsers…" = "開啟 Deezer 和瀏覽器…";

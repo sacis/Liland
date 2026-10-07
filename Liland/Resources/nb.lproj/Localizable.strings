@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Vis når sangen byttes";
+"Open Only on Click" = "Åpne bare ved klikk";
+"Open on Hover" = "Åpne når pekeren holdes over";
+"Equalizer Follows the Music" = "Equalizeren følger musikken";
+"Allow Audio Access in Settings…" = "Tillat lydtilgang i Innstillinger…";
 "Open at Login" = "Åpne ved pålogging";
 "Open %@" = "Åpne %@";
 "Quit Liland" = "Avslutt Liland";
@@ -14,3 +18,11 @@
 "Settings" = "Innstillinger";
 "Nothing playing" = "Ingenting spilles";
 "Play something in Spotify or Apple Music" = "Spill av noe i Spotify eller Apple Music";
+"Shuffle" = "Tilfeldig";
+"Repeat" = "Gjenta";
+"Play music in any app or browser" = "Spill av musikk i en app eller nettleser";
+"Show Deezer and browsers too" = "Vis også Deezer og nettlesere";
+"Turn On" = "Slå på";
+"Almost there" = "Nesten ferdig";
+"Click Open Anyway in Privacy & Security" = "Klikk på Åpne likevel i Personvern og sikkerhet";
+"Turn On Deezer and Browsers…" = "Slå på Deezer og nettlesere …";

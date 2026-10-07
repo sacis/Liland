@@ -23,11 +23,34 @@ struct MessageView: View {
                 action: Self.openAutomationSettings
             )
         }
+        let systemPlayer = nowPlaying.systemPlayer
+        switch systemPlayer.access {
+        case .needsApproval:
+            return Content(
+                icon: "music.note",
+                title: String(localized: "Nothing playing"),
+                subtitle: String(localized: "Show Deezer and browsers too"),
+                actionTitle: String(localized: "Turn On"),
+                action: systemPlayer.turnOn
+            )
+        case .awaitingApproval:
+            return Content(
+                icon: "hand.tap",
+                title: String(localized: "Almost there"),
+                subtitle: String(localized: "Click Open Anyway in Privacy & Security"),
+                actionTitle: String(localized: "Settings"),
+                action: SystemPlayer.openPrivacySettings
+            )
+        case .unavailable, .ready:
+            break
+        }
         let player = nowPlaying.preferredPlayer
         return Content(
             icon: "music.note",
             title: String(localized: "Nothing playing"),
-            subtitle: String(localized: "Play something in Spotify or Apple Music"),
+            subtitle: nowPlaying.systemPlayer.isKnownToWork
+                ? String(localized: "Play music in any app or browser")
+                : String(localized: "Play something in Spotify or Apple Music"),
             actionTitle: player.map { String(localized: "Open \($0.displayName)") },
             action: { player?.open() }
         )

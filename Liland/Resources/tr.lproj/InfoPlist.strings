@@ -1,1 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland'ın neyin çaldığını göstermek ve duraklatıp şarkı değiştirmenize izin vermek için müzik uygulamanızla iletişim kurması gerekir.";
+"NSAudioCaptureUsageDescription" = "Liland, müzik uygulamanızın sesini yalnızca ekolayzırın ritme göre hareket etmesi için kullanır. Hiçbir şey kaydedilmez veya saklanmaz.";

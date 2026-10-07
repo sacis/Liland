@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Şarkı değişince göster";
+"Open Only on Click" = "Yalnızca tıklayınca aç";
+"Open on Hover" = "Üzerine gelince aç";
+"Equalizer Follows the Music" = "Ekolayzır müziği takip etsin";
+"Allow Audio Access in Settings…" = "Ses erişimine Ayarlar’dan izin ver…";
 "Open at Login" = "Girişte aç";
 "Open %@" = "%@ uygulamasını aç";
 "Quit Liland" = "Liland'dan çık";
@@ -14,3 +18,11 @@
 "Settings" = "Ayarlar";
 "Nothing playing" = "Hiçbir şey çalmıyor";
 "Play something in Spotify or Apple Music" = "Spotify veya Apple Music'te bir şey çalın";
+"Shuffle" = "Karıştır";
+"Repeat" = "Tekrarla";
+"Play music in any app or browser" = "Herhangi bir uygulamada veya tarayıcıda müzik çalın";
+"Show Deezer and browsers too" = "Deezer'ı ve tarayıcıları da göster";
+"Turn On" = "Aç";
+"Almost there" = "Neredeyse bitti";
+"Click Open Anyway in Privacy & Security" = "Gizlilik ve Güvenlik'te Yine de Aç'a tıklayın";
+"Turn On Deezer and Browsers…" = "Deezer'ı ve Tarayıcıları Aç…";

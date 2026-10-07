@@ -16,6 +16,15 @@ targets:
     platform: macOS
     sources:
       - path: Liland
+      # Run with /usr/bin/perl to read the system's Now Playing (see NowPlayingHelper.m).
+      - path: NowPlayingHelper/now-playing.pl
+        buildPhase: resources
+    dependencies:
+      # Copied into the app for the script to load, never linked into Liland itself.
+      - target: NowPlayingHelper
+        link: false
+        embed: true
+        codeSign: true
     info:
       path: Liland/Resources/Info.plist
       properties:
@@ -25,11 +34,14 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.music
         NSAppleEventsUsageDescription: Liland needs to talk to your music app to show what's playing and let you pause and skip songs.
+        NSAudioCaptureUsageDescription: Liland uses your music app's sound only to make the equalizer move with the beat. Nothing is recorded or saved.
         NSHumanReadableCopyright: © 2026 Flávia Silva
     entitlements:
       path: Liland/Resources/Liland.entitlements
       properties:
         com.apple.security.automation.apple-events: true
+        # Without it, macOS hands the audio tap silence. It doesn't ask for the microphone.
+        com.apple.security.device.audio-input: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.flaviasilva.Liland
@@ -40,3 +52,27 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         COMBINE_HIDPI_IMAGES: YES
     scheme: {}
+  NowPlayingHelper:
+    type: framework
+    platform: macOS
+    sources:
+      - path: NowPlayingHelper
+        excludes:
+          - "*.pl"
+          - LICENSE
+      # The BSD license of mediaremote-adapter must ship with the app.
+      - path: NowPlayingHelper/LICENSE
+        buildPhase: resources
+    dependencies:
+      - sdk: Foundation.framework
+      - sdk: AppKit.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flaviasilva.Liland.NowPlayingHelper
+        PRODUCT_NAME: NowPlayingHelper
+        GENERATE_INFOPLIST_FILE: YES
+        CLANG_ENABLE_OBJC_ARC: YES
+        DEFINES_MODULE: NO
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"

@@ -1,1 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland 需要与你的音乐 App 通信，以显示正在播放的内容并让你暂停和切换歌曲。";
+"NSAudioCaptureUsageDescription" = "Liland 仅使用音乐 App 的声音让均衡器随节拍跳动，不会录制或保存任何内容。";

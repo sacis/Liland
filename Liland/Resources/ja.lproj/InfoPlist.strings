@@ -1,1 +1,2 @@
 "NSAppleEventsUsageDescription" = "Lilandは再生中の曲を表示し、一時停止や曲送りを行うために、ミュージックアプリと通信する必要があります。";
+"NSAudioCaptureUsageDescription" = "Lilandは、イコライザをビートに合わせて動かすためだけにミュージックAppのサウンドを使用します。録音や保存は一切行いません。";

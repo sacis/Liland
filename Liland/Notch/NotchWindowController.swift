@@ -7,6 +7,7 @@ import SwiftUI
 /// so clicks around the notch keep reaching the menu bar and other apps.
 /// Hover is detected from global/local mouse monitors instead of SwiftUI hover,
 /// because a panel that ignores mouse events never receives hover.
+/// With "open only on click", hovering the notch does nothing until it is clicked.
 final class NotchWindowController {
     private let viewModel: NotchViewModel
     private let panel = NotchPanel()
@@ -55,18 +56,39 @@ final class NotchWindowController {
     // MARK: - Mouse
 
     private func installMouseMonitors() {
-        let events: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .leftMouseUp]
-        if let global = NSEvent.addGlobalMonitorForEvents(matching: events, handler: { [weak self] _ in
-            self?.handleMouse()
+        let events: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .leftMouseUp, .leftMouseDown]
+        if let global = NSEvent.addGlobalMonitorForEvents(matching: events, handler: { [weak self] event in
+            self?.handle(event)
         }) {
             monitors.append(global)
         }
         if let local = NSEvent.addLocalMonitorForEvents(matching: events, handler: { [weak self] event in
-            self?.handleMouse()
+            self?.handle(event)
             return event
         }) {
             monitors.append(local)
         }
+    }
+
+    private func handle(_ event: NSEvent) {
+        if event.type == .leftMouseDown {
+            handleClick()
+        } else {
+            handleMouse()
+        }
+    }
+
+    /// The closed island plus a small margin, so the edge of the notch still counts.
+    private var hotZone: CGRect {
+        viewModel.geometry.screenRect(for: viewModel.mode).insetBy(dx: -4, dy: -4)
+    }
+
+    private func handleClick() {
+        guard Preferences.shouldOpenOnClick,
+              viewModel.status == .closed,
+              hotZone.contains(NSEvent.mouseLocation)
+        else { return }
+        open()
     }
 
     private func handleMouse() {
@@ -76,12 +98,18 @@ final class NotchWindowController {
 
         switch viewModel.status {
         case .closed:
-            panel.ignoresMouseEvents = true
-            let hotZone = geometry.screenRect(for: mode).insetBy(dx: -4, dy: -4)
-            if hotZone.contains(location) {
-                scheduleOpen()
-            } else {
+            let isOverNotch = hotZone.contains(location)
+            if Preferences.shouldOpenOnClick {
+                // Take the click over the notch so it doesn't fall through to the menu bar.
+                panel.ignoresMouseEvents = !isOverNotch
                 cancelOpen()
+            } else {
+                panel.ignoresMouseEvents = true
+                if isOverNotch {
+                    scheduleOpen()
+                } else {
+                    cancelOpen()
+                }
             }
 
         case .open:

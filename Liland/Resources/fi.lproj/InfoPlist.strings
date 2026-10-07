@@ -1,1 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland tarvitsee yhteyden musiikkiappiisi näyttääkseen, mitä soi, ja jotta voit keskeyttää ja vaihtaa kappaletta.";
+"NSAudioCaptureUsageDescription" = "Liland käyttää musiikkiappisi ääntä vain, jotta taajuuskorjain liikkuisi rytmin mukaan. Mitään ei äänitetä eikä tallenneta.";

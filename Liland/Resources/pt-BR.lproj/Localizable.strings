@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Mostrar ao trocar de música";
+"Open Only on Click" = "Abrir só ao clicar";
+"Open on Hover" = "Abrir ao passar o mouse";
+"Equalizer Follows the Music" = "Equalizador acompanha a música";
+"Allow Audio Access in Settings…" = "Permitir acesso ao áudio nos Ajustes…";
 "Open at Login" = "Abrir ao iniciar o Mac";
 "Open %@" = "Abrir %@";
 "Quit Liland" = "Sair do Liland";
@@ -14,3 +18,11 @@
 "Settings" = "Ajustes";
 "Nothing playing" = "Nada tocando";
 "Play something in Spotify or Apple Music" = "Dê play em algo no Spotify ou no Apple Music";
+"Shuffle" = "Aleatório";
+"Repeat" = "Repetir";
+"Play music in any app or browser" = "Dê play em qualquer app ou navegador";
+"Show Deezer and browsers too" = "Mostrar também Deezer e navegadores";
+"Turn On" = "Ativar";
+"Almost there" = "Quase lá";
+"Click Open Anyway in Privacy & Security" = "Clique em Abrir Mesmo Assim em Privacidade e Segurança";
+"Turn On Deezer and Browsers…" = "Ativar Deezer e navegadores…";

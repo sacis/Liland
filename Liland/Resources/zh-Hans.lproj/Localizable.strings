@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "切换歌曲时显示";
+"Open Only on Click" = "仅在点按时打开";
+"Open on Hover" = "悬停时打开";
+"Equalizer Follows the Music" = "均衡器跟随音乐";
+"Allow Audio Access in Settings…" = "在“设置”中允许访问音频…";
 "Open at Login" = "登录时打开";
 "Open %@" = "打开%@";
 "Quit Liland" = "退出 Liland";
@@ -14,3 +18,11 @@
 "Settings" = "设置";
 "Nothing playing" = "未在播放";
 "Play something in Spotify or Apple Music" = "在 Spotify 或 Apple Music 中播放内容";
+"Shuffle" = "随机播放";
+"Repeat" = "重复播放";
+"Play music in any app or browser" = "在任意 App 或浏览器中播放音乐";
+"Show Deezer and browsers too" = "同时显示 Deezer 和浏览器";
+"Turn On" = "开启";
+"Almost there" = "就快好了";
+"Click Open Anyway in Privacy & Security" = "请在“隐私与安全性”中点按“仍要打开”";
+"Turn On Deezer and Browsers…" = "开启 Deezer 和浏览器…";
