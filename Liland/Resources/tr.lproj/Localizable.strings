@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Şarkı değişince göster";
+"Open Only on Click" = "Yalnızca tıklayınca aç";
+"Open on Hover" = "Üzerine gelince aç";
+"Equalizer Follows the Music" = "Ekolayzır müziği takip etsin";
+"Allow Audio Access in Settings…" = "Ses erişimine Ayarlar’dan izin ver…";
 "Open at Login" = "Girişte aç";
 "Open %@" = "%@ uygulamasını aç";
 "Quit Liland" = "Liland'dan çık";

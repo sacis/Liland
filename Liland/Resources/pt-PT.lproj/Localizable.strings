@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Mostrar ao mudar de música";
+"Open Only on Click" = "Abrir só ao clicar";
+"Open on Hover" = "Abrir ao passar o rato";
+"Equalizer Follows the Music" = "Equalizador acompanha a música";
+"Allow Audio Access in Settings…" = "Permitir acesso ao áudio nas Definições…";
 "Open at Login" = "Abrir ao iniciar sessão";
 "Open %@" = "Abrir %@";
 "Quit Liland" = "Sair do Liland";

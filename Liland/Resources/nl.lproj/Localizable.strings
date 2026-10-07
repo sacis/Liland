@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Tonen bij nieuw nummer";
+"Open Only on Click" = "Alleen openen bij klikken";
+"Open on Hover" = "Openen bij aanwijzen";
+"Equalizer Follows the Music" = "Equalizer volgt de muziek";
+"Allow Audio Access in Settings…" = "Audiotoegang toestaan in Instellingen…";
 "Open at Login" = "Open bij inloggen";
 "Open %@" = "Open %@";
 "Quit Liland" = "Stop Liland";

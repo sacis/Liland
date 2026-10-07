@@ -49,6 +49,8 @@ Se você negar sem querer, libere depois em **Ajustes do Sistema › Privacidade
 No ícone de cápsula da barra de menus:
 
 - **Mostrar ao trocar de música**: abre a ilha por alguns segundos quando a faixa muda.
+- **Abrir só ao clicar**: a ilha deixa de abrir quando o mouse passa por cima e só abre quando você clica no notch. Para voltar ao jeito anterior, clique em **Abrir ao passar o mouse**.
+- **Equalizador acompanha a música**: as barrinhas passam a seguir a batida da música que está tocando (macOS 14.4 ou mais novo). Na primeira vez, o macOS pede permissão para o Liland acessar o áudio. O Liland só mede o som na hora, sem gravar nem salvar nada. Se você negar, as barrinhas continuam com a animação de antes, e o item **Permitir acesso ao áudio nos Ajustes…** aparece no menu para você liberar depois.
 - **Abrir ao iniciar o Mac**
 - **Sair do Liland**
 

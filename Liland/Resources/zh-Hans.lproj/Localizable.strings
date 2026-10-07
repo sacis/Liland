@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "切换歌曲时显示";
+"Open Only on Click" = "仅在点按时打开";
+"Open on Hover" = "悬停时打开";
+"Equalizer Follows the Music" = "均衡器跟随音乐";
+"Allow Audio Access in Settings…" = "在“设置”中允许访问音频…";
 "Open at Login" = "登录时打开";
 "Open %@" = "打开%@";
 "Quit Liland" = "退出 Liland";

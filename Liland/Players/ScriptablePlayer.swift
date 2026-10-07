@@ -6,7 +6,7 @@ import Observation
 /// The app's distributed notification triggers a refresh, and the full state is
 /// read through AppleScript. A slow poll catches changes made from other devices.
 @Observable
-final class ScriptablePlayer: Identifiable {
+final class ScriptablePlayer: MusicPlayer, Identifiable {
     let definition: PlayerDefinition
     let appURL: URL?
     let displayName: String
@@ -22,6 +22,7 @@ final class ScriptablePlayer: Identifiable {
     @ObservationIgnored private var pollTimer: Timer?
 
     var id: String { definition.bundleIdentifier }
+    var audioBundleIdentifier: String? { definition.bundleIdentifier }
     var isInstalled: Bool { appURL != nil }
 
     init(definition: PlayerDefinition) {
@@ -70,7 +71,11 @@ final class ScriptablePlayer: Identifiable {
 
     // MARK: - Reading state
 
-    func refresh(after delay: TimeInterval = 0) {
+    func refresh() {
+        refresh(after: 0)
+    }
+
+    func refresh(after delay: TimeInterval) {
         guard isInstalled, runningApplication != nil else {
             applyNotRunning()
             return

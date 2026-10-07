@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "Показувати при зміні треку";
+"Open Only on Click" = "Відкривати лише після клацання";
+"Open on Hover" = "Відкривати при наведенні";
+"Equalizer Follows the Music" = "Еквалайзер слідує за музикою";
+"Allow Audio Access in Settings…" = "Дозволити доступ до звуку в Параметрах…";
 "Open at Login" = "Відкривати під час входу";
 "Open %@" = "Відкрити %@";
 "Quit Liland" = "Завершити Liland";

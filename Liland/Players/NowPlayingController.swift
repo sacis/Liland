@@ -9,6 +9,7 @@ final class NowPlayingController {
     static let defaultAccent = Color(red: 0.12, green: 0.84, blue: 0.38)
 
     let players: [ScriptablePlayer]
+    let audioLevels = AudioLevelMonitor()
 
     private(set) var activePlayer: ScriptablePlayer?
     private(set) var artwork: NSImage?
@@ -88,6 +89,7 @@ final class NowPlayingController {
         if chosen !== activePlayer {
             activePlayer = chosen
         }
+        audioLevels.follow(bundleID: chosen?.id, isPlaying: isPlaying)
 
         let key = chosen.flatMap { player in player.snapshot.map { "\(player.id)|\($0.track.id)" } }
         if key != artworkKey {

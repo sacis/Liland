@@ -1,4 +1,8 @@
 "Show When the Song Changes" = "곡이 바뀔 때 표시";
+"Open Only on Click" = "클릭할 때만 열기";
+"Open on Hover" = "포인터를 올리면 열기";
+"Equalizer Follows the Music" = "이퀄라이저가 음악을 따라 움직임";
+"Allow Audio Access in Settings…" = "설정에서 오디오 접근 허용…";
 "Open at Login" = "로그인 시 열기";
 "Open %@" = "%@ 열기";
 "Quit Liland" = "Liland 종료";

@@ -1,1 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland musi komunikować się z aplikacją muzyczną, aby pokazywać, co jest odtwarzane, i umożliwiać pauzowanie oraz zmianę utworu.";
+"NSAudioCaptureUsageDescription" = "Liland używa dźwięku z aplikacji muzycznej tylko po to, by korektor poruszał się w rytm muzyki. Nic nie jest nagrywane ani zapisywane.";

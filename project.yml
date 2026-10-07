@@ -16,6 +16,15 @@ targets:
     platform: macOS
     sources:
       - path: Liland
+      # Run with /usr/bin/perl to read the system's Now Playing (see Vendor/MediaRemoteAdapter).
+      - path: Vendor/MediaRemoteAdapter/bin/mediaremote-adapter.pl
+        buildPhase: resources
+    dependencies:
+      # Copied into the app for the script to load, never linked into Liland itself.
+      - target: MediaRemoteAdapter
+        link: false
+        embed: true
+        codeSign: true
     info:
       path: Liland/Resources/Info.plist
       properties:
@@ -25,11 +34,14 @@ targets:
         LSUIElement: true
         LSApplicationCategoryType: public.app-category.music
         NSAppleEventsUsageDescription: Liland needs to talk to your music app to show what's playing and let you pause and skip songs.
+        NSAudioCaptureUsageDescription: Liland uses your music app's sound only to make the equalizer move with the beat. Nothing is recorded or saved.
         NSHumanReadableCopyright: © 2026 Flávia Silva
     entitlements:
       path: Liland/Resources/Liland.entitlements
       properties:
         com.apple.security.automation.apple-events: true
+        # Without it, macOS hands the audio tap silence. It doesn't ask for the microphone.
+        com.apple.security.device.audio-input: true
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.flaviasilva.Liland
@@ -40,3 +52,28 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         COMBINE_HIDPI_IMAGES: YES
     scheme: {}
+  MediaRemoteAdapter:
+    type: framework
+    platform: macOS
+    sources:
+      - path: Vendor/MediaRemoteAdapter/src
+      - path: Vendor/MediaRemoteAdapter/include
+        headerVisibility: project
+    dependencies:
+      - sdk: Foundation.framework
+      - sdk: AppKit.framework
+      - sdk: UniformTypeIdentifiers.framework
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.flaviasilva.Liland.MediaRemoteAdapter
+        PRODUCT_NAME: MediaRemoteAdapter
+        GENERATE_INFOPLIST_FILE: YES
+        CLANG_ENABLE_OBJC_ARC: YES
+        # The Perl script looks up the framework's functions by name.
+        GCC_SYMBOLS_PRIVATE_EXTERN: NO
+        HEADER_SEARCH_PATHS: $(SRCROOT)/Vendor/MediaRemoteAdapter/src $(SRCROOT)/Vendor/MediaRemoteAdapter/include
+        DEFINES_MODULE: NO
+        SKIP_INSTALL: YES
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        GCC_WARN_INHIBIT_ALL_WARNINGS: YES
