@@ -306,15 +306,24 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Commands
 
+    /// Says which one, play or pause: Safari can think a playing site is paused, and its
+    /// own toggle would then play it again instead of pausing.
     func playPause() {
+        let shouldPause = snapshot?.isPlaying ?? false
         if var snapshot {
             snapshot.position = snapshot.elapsed(at: Date())
             snapshot.positionDate = Date()
-            snapshot.isPlaying.toggle()
+            snapshot.isPlaying = !shouldPause
             self.snapshot = snapshot
             onChange?()
         }
-        bridge?.send(.togglePlayPause)
+        if shouldPause {
+            // A position already on its way mustn't count as still playing.
+            lastPosition = nil
+            silenceWork?.cancel()
+            silenceWork = nil
+        }
+        bridge?.send(shouldPause ? .pause : .play)
     }
 
     func nextTrack() {

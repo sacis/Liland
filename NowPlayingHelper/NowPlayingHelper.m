@@ -8,7 +8,7 @@
 //                   {"state": {...}, "artwork": "<base64>" | null}
 //                   "state" is {} when nothing plays; "artwork" is only there when it changed.
 //   liland_command  Runs the command that follows "command" in the arguments:
-//                   togglePlayPause, nextTrack, previousTrack,
+//                   play, pause, nextTrack, previousTrack,
 //                   seek SECONDS, shuffle MODE (1 off, 3 on), repeat MODE (1 off, 2 one, 3 all)
 //
 // Adapted from mediaremote-adapter by Jonas van den Berg and contributors
@@ -43,7 +43,8 @@ static struct {
 } MR;
 
 enum {
-    MRTogglePlayPause = 2,
+    MRPlay = 0,
+    MRPause = 1,
     MRNextTrack = 4,
     MRPreviousTrack = 5,
 };
@@ -251,8 +252,10 @@ EXPORT void liland_command(void) {
     NSString *name = arguments[index + 1];
     NSString *value = index + 2 < arguments.count ? arguments[index + 2] : nil;
 
-    if ([name isEqualToString:@"togglePlayPause"]) {
-        MR.sendCommand(MRTogglePlayPause, nil);
+    if ([name isEqualToString:@"play"]) {
+        MR.sendCommand(MRPlay, nil);
+    } else if ([name isEqualToString:@"pause"]) {
+        MR.sendCommand(MRPause, nil);
     } else if ([name isEqualToString:@"nextTrack"]) {
         MR.sendCommand(MRNextTrack, nil);
     } else if ([name isEqualToString:@"previousTrack"]) {

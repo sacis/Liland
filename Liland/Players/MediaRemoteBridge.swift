@@ -198,7 +198,8 @@ final class MediaRemoteBridge {
     // MARK: - Commands
 
     enum Command {
-        case togglePlayPause
+        case play
+        case pause
         case nextTrack
         case previousTrack
         case seek(TimeInterval)
@@ -207,7 +208,8 @@ final class MediaRemoteBridge {
 
         var arguments: [String] {
             switch self {
-            case .togglePlayPause: ["togglePlayPause"]
+            case .play: ["play"]
+            case .pause: ["pause"]
             case .nextTrack: ["nextTrack"]
             case .previousTrack: ["previousTrack"]
             case .seek(let seconds): ["seek", String(max(seconds, 0))]
