@@ -81,6 +81,8 @@ final class SystemPlayer: MusicPlayer {
     @ObservationIgnored private var pending: (trackID: String, state: [String: Any], artwork: Data?)?
     /// Recent songs' artwork: a song that gets its place back from other media comes without it.
     @ObservationIgnored private var recentArtwork: [(trackID: String, data: Data)] = []
+    /// Tracks whose artwork was already looked up in Deezer's catalog; see `lookUpArtwork`.
+    @ObservationIgnored private var artworkLookups: Set<String> = []
 
     var audioBundleIdentifier: String? { app?.reportingBundleIdentifier }
     var displayName: String { app?.name ?? "" }
@@ -223,6 +225,9 @@ final class SystemPlayer: MusicPlayer {
         if let artwork { remember(artwork, for: track.id) }
         let artwork = artwork ?? recentArtwork.last { $0.trackID == track.id }?.data
         update(app: app, snapshot: snapshot, artworkData: artwork)
+        if artwork == nil {
+            lookUpArtwork(for: track)
+        }
         if isMoving && !isReportedPlaying {
             scheduleSilenceCheck()
         }
@@ -362,6 +367,54 @@ final class SystemPlayer: MusicPlayer {
             guard let self, self.artworkImage == nil, self.artworkRequest?.trackID == track.id else { return }
             completion(nil)
         }
+    }
+
+    /// Some sites, such as Deezer in Safari, never send their artwork. The cover is then
+    /// looked up once in Deezer's public catalog; artwork the player sends later still wins.
+    private func lookUpArtwork(for track: NowPlayingTrack) {
+        guard !track.artist.isEmpty, artworkLookups.insert(track.id).inserted else { return }
+        if artworkLookups.count > 500 { artworkLookups = [track.id] }
+        Self.catalogArtwork(for: track) { [weak self] data in
+            DispatchQueue.main.async {
+                guard let self, let data, self.snapshot?.track.id == track.id, self.artworkData == nil else { return }
+                self.remember(data, for: track.id)
+                self.update(app: self.app, snapshot: self.snapshot, artworkData: data)
+            }
+        }
+    }
+
+    /// The album's cover, or the song's when the site doesn't name the album.
+    private static func catalogArtwork(for track: NowPlayingTrack, completion: @escaping (Data?) -> Void) {
+        let byAlbum = !track.album.isEmpty
+        var components = URLComponents(string: byAlbum ? "https://api.deezer.com/search/album" : "https://api.deezer.com/search")
+        components?.queryItems = [
+            URLQueryItem(name: "q", value: byAlbum
+                ? "artist:\"\(track.artist)\" album:\"\(track.album)\""
+                : "\(track.artist) \(track.title)"),
+            URLQueryItem(name: "limit", value: "10"),
+        ]
+        guard let url = components?.url else { return completion(nil) }
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
+            let results = json?["data"] as? [[String: Any]] ?? []
+            // Albums carry their cover; songs carry their album's. Only the same artist counts
+            // (sites may list several, "A, B"), and the exact name comes first.
+            let covers: [(name: String, cover: String)] = results.compactMap { result in
+                let album = byAlbum ? result : result["album"] as? [String: Any]
+                guard let name = result["title"] as? String,
+                      let cover = album?["cover_xl"] as? String,
+                      let artist = (result["artist"] as? [String: Any])?["name"] as? String,
+                      track.artist.localizedCaseInsensitiveContains(artist)
+                else { return nil }
+                return (name, cover)
+            }
+            let wanted = byAlbum ? track.album : track.title
+            let match = covers.first { $0.name.caseInsensitiveCompare(wanted) == .orderedSame } ?? covers.first
+            guard let coverURL = match.flatMap({ URL(string: $0.cover) }) else { return completion(nil) }
+            URLSession.shared.dataTask(with: coverURL) { data, _, _ in
+                completion(data.flatMap { NSImage(data: $0) != nil ? $0 : nil })
+            }.resume()
+        }.resume()
     }
 
     private func deliverArtwork() {
