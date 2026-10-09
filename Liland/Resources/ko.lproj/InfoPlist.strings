@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland가 재생 중인 음악을 표시하고 일시 정지 및 곡 넘기기를 하려면 음악 앱과 통신해야 합니다.";
-"NSAudioCaptureUsageDescription" = "Liland는 이퀄라이저가 비트에 맞춰 움직이도록 음악 앱의 소리만 사용합니다. 아무것도 녹음하거나 저장하지 않습니다.";
+"NSAudioCaptureUsageDescription" = "Liland는 이퀄라이저가 비트에 맞춰 움직이도록 하고, 고급 모드에서 음악 소리를 조절하기 위해 음악 앱의 소리를 사용합니다. 아무것도 녹음하거나 저장하지 않습니다.";

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExpandedPlayerView: View {
     let viewModel: NotchViewModel
+    var showsSoundControls = false
 
     private var nowPlaying: NowPlayingController { viewModel.nowPlaying }
 
@@ -14,6 +15,11 @@ struct ExpandedPlayerView: View {
                 trackInfo
                 PlaybackProgressView(viewModel: viewModel)
                 controls
+                if showsSoundControls {
+                    SoundControlsView(viewModel: viewModel)
+                        .frame(height: NotchGeometry.soundControlsHeight - 10)
+                        .transition(.opacity)
+                }
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 14)

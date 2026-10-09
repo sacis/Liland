@@ -22,7 +22,8 @@ final class NotchViewModel {
         let hasTrack = nowPlaying.track != nil
         switch status {
         case .open:
-            return hasTrack ? .open : .openMessage
+            guard hasTrack else { return .openMessage }
+            return nowPlaying.audioLevels.isSupported && nowPlaying.audioLevels.isAdvanced ? .openAdvanced : .open
         case .closed:
             return hasTrack && nowPlaying.isPlaying ? .compact : .idle
         }

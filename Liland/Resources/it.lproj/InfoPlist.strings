@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland deve comunicare con la tua app musicale per mostrare cosa è in riproduzione e permetterti di mettere in pausa e cambiare brano.";
-"NSAudioCaptureUsageDescription" = "Liland usa il suono della tua app musicale solo per far muovere l’equalizzatore a ritmo. Niente viene registrato o salvato.";
+"NSAudioCaptureUsageDescription" = "Liland usa il suono della tua app musicale per far muovere l’equalizzatore a ritmo e, in modalità Avanzate, per regolare il suono della musica. Niente viene registrato o salvato.";

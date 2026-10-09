@@ -26,3 +26,13 @@
 "Almost there" = "Melkein valmista";
 "Click Open Anyway in Privacy & Security" = "Valitse Yksityisyys ja suojaus -kohdassa Avaa silti";
 "Turn On Deezer and Browsers…" = "Ota Deezer ja selaimet käyttöön…";
+"Advanced" = "Lisäasetukset";
+"Full Mix" = "Kaikki";
+"Vocals" = "Laulu";
+"Bass" = "Basso";
+"Drums" = "Rummut";
+"Pitch" = "Sävelkorkeus";
+"Lower Pitch" = "Laske sävelkorkeutta";
+"Raise Pitch" = "Nosta sävelkorkeutta";
+"Reset" = "Palauta";
+"Allow audio access to adjust the sound" = "Salli äänen käyttö säätääksesi ääntä";

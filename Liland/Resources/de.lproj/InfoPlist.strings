@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland muss mit deiner Musik-App kommunizieren, um anzuzeigen, was läuft, und Pausieren und Titelwechsel zu ermöglichen.";
-"NSAudioCaptureUsageDescription" = "Liland nutzt den Ton deiner Musik-App nur, damit der Equalizer im Takt mitgeht. Es wird nichts aufgenommen oder gespeichert.";
+"NSAudioCaptureUsageDescription" = "Liland nutzt den Ton deiner Musik-App, damit der Equalizer im Takt mitgeht und, im Modus „Erweitert“, um den Klang der Musik anzupassen. Es wird nichts aufgenommen oder gespeichert.";

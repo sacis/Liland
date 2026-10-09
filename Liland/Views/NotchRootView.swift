@@ -34,11 +34,11 @@ struct NotchRootView: View {
             CompactView(nowPlaying: viewModel.nowPlaying, notchWidth: notch.width)
                 .frame(height: notch.height)
                 .transition(.opacity)
-        case .open:
-            ExpandedPlayerView(viewModel: viewModel)
+        case .open, .openAdvanced:
+            ExpandedPlayerView(viewModel: viewModel, showsSoundControls: mode == .openAdvanced)
                 .frame(
-                    width: NotchGeometry.openWidth - NotchMode.open.cornerRadii.top * 2,
-                    height: notch.height + NotchGeometry.openContentHeight,
+                    width: NotchGeometry.openWidth - mode.cornerRadii.top * 2,
+                    height: viewModel.geometry.size(for: mode).height,
                     alignment: .top
                 )
                 .transition(.islandContent)
