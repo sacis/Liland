@@ -12,6 +12,8 @@ struct LilandApp: App {
 }
 
 private struct MenuContent: View {
+    private static let deezerBundleIdentifier = "com.deezer.deezer-desktop"
+
     let nowPlaying: NowPlayingController
 
     @AppStorage(Preferences.peekOnTrackChange) private var peekOnTrackChange = false
@@ -58,8 +60,15 @@ private struct MenuContent: View {
             EmptyView()
         }
         Divider()
-        ForEach(nowPlaying.players.filter(\.isInstalled), id: \.id) { player in
+        // Not the system player: its app is just whichever one played last (often a browser).
+        // While it plays, the island's own button opens it. Deezer is offered on its own instead.
+        ForEach(nowPlaying.players.filter { $0.isInstalled && $0 !== nowPlaying.systemPlayer }, id: \.id) { player in
             Button("Open \(player.displayName)") { player.open() }
+        }
+        if let deezer = NSWorkspace.shared.urlForApplication(withBundleIdentifier: Self.deezerBundleIdentifier) {
+            Button("Open \("Deezer")") {
+                NSWorkspace.shared.openApplication(at: deezer, configuration: NSWorkspace.OpenConfiguration())
+            }
         }
         Divider()
         Button("Quit Liland") { NSApp.terminate(nil) }
