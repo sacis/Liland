@@ -62,12 +62,12 @@ No ícone de cápsula da barra de menus:
 - **Abrir só ao clicar**: a ilha deixa de abrir quando o mouse passa por cima e só abre quando você clica no notch. Para voltar ao jeito anterior, clique em **Abrir ao passar o mouse**.
 - **Equalizador acompanha a música**: as barrinhas passam a seguir a batida da música que está tocando (macOS 14.4 ou mais novo). Na primeira vez, o macOS pede permissão para o Liland acessar o áudio. O Liland só mede o som na hora, sem gravar nem salvar nada. Se você negar, as barrinhas continuam com a animação de antes, e o item **Permitir acesso ao áudio nos Ajustes…** aparece no menu para você liberar depois.
 - **Avançado**: o player aberto ganha controles de som embaixo (macOS 14.4 ou mais novo, com a mesma permissão de áudio do item acima):
-  - **Tudo / Voz / Baixo / Bateria**: deixa tocar só uma parte da música. É uma estimativa feita na hora, não uma separação perfeita: em **Voz**, outros instrumentos do centro da mixagem ainda aparecem um pouco, e em **Bateria** o começo de algumas notas pode vazar.
+  - **Voz / Baixo / Bateria**: deixa tocar só as partes escolhidas, no volume da música inteira. Dá para escolher mais de uma (por exemplo **Voz** e **Baixo**); clicar numa parte já escolhida tira ela, e tirar a última volta para **Tudo**. É uma estimativa feita na hora, não uma separação perfeita: o Liland reconhece a voz e o baixo por estarem no centro da mixagem, então instrumentos que também estão no centro ainda aparecem um pouco, e um instrumento muito parecido com bateria (como um violão bem batido) pode vazar nela.
   - **Equalizador**: cinco faixas, dos graves (80) aos agudos (10k), de −12 a +12 dB.
   - **Tom**: sobe ou desce a música até 6 semitons, sem mudar a velocidade.
   - **↺** volta tudo ao normal. Os ajustes ficam salvos para a próxima vez.
 
-  Com o modo ligado, o Liland toca a música no lugar do app, já ajustada. Ao isolar uma parte, o som chega uns 40 ms mais tarde. Desligando o modo ou fechando o Liland, o som volta direto do app.
+  Com o modo ligado, o Liland toca a música no lugar do app, já ajustada. Ao isolar partes, o som chega cerca de um oitavo de segundo mais tarde, e ao mudar o tom, mais um décimo de segundo (num vídeo, a boca pode ficar um pouco fora de sincronia com a voz). Desligando o modo ou fechando o Liland, o som volta direto do app.
 - **Abrir ao iniciar o Mac**
 - **Sair do Liland**
 

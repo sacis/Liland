@@ -34,24 +34,17 @@ struct SoundControlsView: View {
 
     // MARK: - Isolation
 
+    /// "Full Mix" plays everything; each part adds to or leaves what's kept, and leaving the last one plays everything again.
     private var isolationRow: some View {
-        HStack(spacing: 6) {
-            ForEach(AudioAdjustments.Isolation.allCases, id: \.self) { isolation in
-                let isSelected = audio.adjustments.isolation == isolation
-                Button {
-                    audio.adjustments.isolation = isolation
-                } label: {
-                    Text(Self.title(of: isolation))
-                        .font(.system(size: 11, weight: .semibold))
-                        .lineLimit(1)
-                        .foregroundStyle(isSelected ? .black : .white.opacity(0.75))
-                        .padding(.horizontal, 10)
-                        .frame(height: 24)
-                        .background(Capsule().fill(isSelected ? .white.opacity(0.9) : .white.opacity(0.1)))
-                        .contentShape(Capsule())
+        let isolated = audio.adjustments.isolated
+        return HStack(spacing: 6) {
+            pill("Full Mix", isSelected: isolated.isEmpty) {
+                audio.adjustments.isolated = []
+            }
+            ForEach(AudioAdjustments.Part.allCases, id: \.self) { part in
+                pill(Self.title(of: part), isSelected: isolated.contains(part)) {
+                    audio.adjustments.toggle(part)
                 }
-                .buttonStyle(.plain)
-                .fixedSize()
             }
             Spacer(minLength: 8)
             Button {
@@ -67,12 +60,26 @@ struct SoundControlsView: View {
             .disabled(audio.adjustments == .neutral)
             .help("Reset")
         }
-        .animation(.easeOut(duration: 0.15), value: audio.adjustments.isolation)
+        .animation(.easeOut(duration: 0.15), value: isolated)
     }
 
-    private static func title(of isolation: AudioAdjustments.Isolation) -> LocalizedStringKey {
-        switch isolation {
-        case .none: "Full Mix"
+    private func pill(_ title: LocalizedStringKey, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+                .foregroundStyle(isSelected ? .black : .white.opacity(0.75))
+                .padding(.horizontal, 10)
+                .frame(height: 24)
+                .background(Capsule().fill(isSelected ? .white.opacity(0.9) : .white.opacity(0.1)))
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .fixedSize()
+    }
+
+    private static func title(of part: AudioAdjustments.Part) -> LocalizedStringKey {
+        switch part {
         case .vocals: "Vocals"
         case .bass: "Bass"
         case .drums: "Drums"
