@@ -1,8 +1,7 @@
-<p align="center">
-  <img src="Liland/Resources/Assets.xcassets/AppIcon.appiconset/icon_256.png" width="112" alt="">
-</p>
-
-<h1 align="center">Liland ♡(>ᴗ•)</h1>
+<h1 align="center">
+  <img src="Liland/Resources/Assets.xcassets/AppIcon.appiconset/icon_256.png" width="72" align="absmiddle" alt="">
+  Liland ♡(>ᴗ•)
+</h1>
 
 <p align="center">
   Uma Dynamic Island no notch do MacBook, pra ver e controlar a música que está tocando.
