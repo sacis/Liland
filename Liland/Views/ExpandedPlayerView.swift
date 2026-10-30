@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ExpandedPlayerView: View {
     let viewModel: NotchViewModel
+    var showsSoundControls = false
 
     private var nowPlaying: NowPlayingController { viewModel.nowPlaying }
 
@@ -14,6 +15,11 @@ struct ExpandedPlayerView: View {
                 trackInfo
                 PlaybackProgressView(viewModel: viewModel)
                 controls
+                if showsSoundControls {
+                    SoundControlsView(viewModel: viewModel)
+                        .frame(height: NotchGeometry.soundControlsHeight - 10)
+                        .transition(.opacity)
+                }
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 14)
@@ -43,7 +49,7 @@ struct ExpandedPlayerView: View {
         HStack(spacing: 12) {
             ArtworkView(image: nowPlaying.artwork, cornerRadius: 10)
                 .frame(width: 56, height: 56)
-                .onTapGesture { nowPlaying.activePlayer?.open() }
+                .onTapGesture { nowPlaying.activePlayer?.openAlbum() }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: nowPlaying.track?.title ?? "")

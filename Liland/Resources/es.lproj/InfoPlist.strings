@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland necesita comunicarse con tu app de música para mostrar lo que suena y permitirte pausar y cambiar de canción.";
-"NSAudioCaptureUsageDescription" = "Liland usa el sonido de tu app de música solo para que el ecualizador siga el ritmo. No se graba ni se guarda nada.";
+"NSAudioCaptureUsageDescription" = "Liland usa el sonido de tu app de música para que el ecualizador siga el ritmo y, en el modo Avanzado, para ajustar cómo suena la música. No se graba ni se guarda nada.";

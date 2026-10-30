@@ -8,16 +8,18 @@ enum NotchMode: Equatable {
     case compact
     /// Hovered with a track: full player.
     case open
+    /// Hovered with a track in Advanced mode: the player, with the sound controls below.
+    case openAdvanced
     /// Hovered without a track (Spotify closed, nothing playing, no permission).
     case openMessage
 
-    var isOpen: Bool { self == .open || self == .openMessage }
+    var isOpen: Bool { self != .idle && self != .compact }
 
     var cornerRadii: (top: CGFloat, bottom: CGFloat) {
         switch self {
         case .idle: (6, 10)
         case .compact: (6, 12)
-        case .open: (18, 28)
+        case .open, .openAdvanced: (18, 28)
         case .openMessage: (16, 24)
         }
     }
@@ -31,9 +33,10 @@ struct NotchGeometry: Equatable {
     static let compactWing: CGFloat = 42
     static let openWidth: CGFloat = 480
     static let openContentHeight: CGFloat = 140
+    static let soundControlsHeight: CGFloat = 132
     static let messageContentHeight: CGFloat = 70
     /// The panel is fixed at this size; the island animates inside it.
-    static let windowSize = CGSize(width: 640, height: 260)
+    static let windowSize = CGSize(width: 640, height: 400)
 
     static func current() -> NotchGeometry {
         let screen = NSScreen.screens.first { $0.safeAreaInsets.top > 0 } ?? NSScreen.main ?? NSScreen.screens.first
@@ -55,6 +58,8 @@ struct NotchGeometry: Equatable {
             CGSize(width: notchSize.width + Self.compactWing * 2, height: notchSize.height)
         case .open:
             CGSize(width: Self.openWidth, height: notchSize.height + Self.openContentHeight)
+        case .openAdvanced:
+            CGSize(width: Self.openWidth, height: notchSize.height + Self.openContentHeight + Self.soundControlsHeight)
         case .openMessage:
             CGSize(width: Self.openWidth, height: notchSize.height + Self.messageContentHeight)
         }

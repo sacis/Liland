@@ -27,4 +27,6 @@ protocol MusicPlayer: AnyObject {
     /// Off → all → one → off. Does nothing when the snapshot has no repeat mode.
     func cycleRepeat()
     func open()
+    /// Shows the playing song's album in the app, or just opens the app when it can't.
+    func openAlbum()
 }

@@ -26,3 +26,13 @@
 "Almost there" = "あと少しです";
 "Click Open Anyway in Privacy & Security" = "プライバシーとセキュリティで「このまま開く」をクリックしてください";
 "Turn On Deezer and Browsers…" = "Deezerとブラウザをオンにする…";
+"Advanced" = "詳細";
+"Full Mix" = "すべて";
+"Vocals" = "ボーカル";
+"Bass" = "ベース";
+"Drums" = "ドラム";
+"Pitch" = "キー";
+"Lower Pitch" = "キーを下げる";
+"Raise Pitch" = "キーを上げる";
+"Reset" = "リセット";
+"Allow audio access to adjust the sound" = "サウンドを調整するにはオーディオへのアクセスを許可してください";

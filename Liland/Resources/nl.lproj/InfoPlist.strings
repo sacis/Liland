@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland moet met je muziek-app communiceren om te tonen wat er speelt en je te laten pauzeren en nummers over te slaan.";
-"NSAudioCaptureUsageDescription" = "Liland gebruikt het geluid van je muziek-app alleen om de equalizer op de beat te laten bewegen. Er wordt niets opgenomen of bewaard.";
+"NSAudioCaptureUsageDescription" = "Liland gebruikt het geluid van je muziek-app om de equalizer op de beat te laten bewegen en, in de modus Geavanceerd, om het geluid van de muziek aan te passen. Er wordt niets opgenomen of bewaard.";

@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland må kommunisere med musikkappen din for å vise hva som spilles og la deg pause og bytte sang.";
-"NSAudioCaptureUsageDescription" = "Liland bruker lyden fra musikkappen din bare for å få equalizeren til å følge rytmen. Ingenting blir tatt opp eller lagret.";
+"NSAudioCaptureUsageDescription" = "Liland bruker lyden fra musikkappen din for å få equalizeren til å følge rytmen og, i Avansert modus, for å justere hvordan musikken låter. Ingenting blir tatt opp eller lagret.";

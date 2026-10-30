@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "O Liland precisa conversar com o seu app de música para mostrar o que está tocando e permitir pausar e trocar de faixa.";
-"NSAudioCaptureUsageDescription" = "O Liland usa o som do seu app de música só para fazer o equalizador acompanhar a batida. Nada é gravado nem salvo.";
+"NSAudioCaptureUsageDescription" = "O Liland usa o som do seu app de música para fazer o equalizador acompanhar a batida e, no modo Avançado, para ajustar o som da música. Nada é gravado nem salvo.";

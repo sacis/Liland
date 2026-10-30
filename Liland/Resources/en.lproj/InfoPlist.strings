@@ -1,2 +1,2 @@
 "NSAppleEventsUsageDescription" = "Liland needs to talk to your music app to show what's playing and let you pause and skip songs.";
-"NSAudioCaptureUsageDescription" = "Liland uses your music app's sound only to make the equalizer move with the beat. Nothing is recorded or saved.";
+"NSAudioCaptureUsageDescription" = "Liland uses your music app's sound to make the equalizer move with the beat and, in Advanced mode, to adjust how the music sounds. Nothing is recorded or saved.";

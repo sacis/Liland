@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="206" height="52" viewBox="0 0 206 52" role="img" aria-label="Baixar o Liland">
+  <rect x="1" y="1" width="204" height="50" rx="25" fill="#fbd3e4" stroke="#f3a9c9" stroke-width="2"/>
+  <g fill="none" stroke="#5b1d3f" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 16v14"/>
+    <path d="M36 25l6 6 6-6"/>
+    <path d="M34 36h16"/>
+  </g>
+  <text x="62" y="32" fill="#5b1d3f" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="17" font-weight="600">Baixar o Liland</text>
+</svg>

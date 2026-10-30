@@ -27,7 +27,7 @@
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Liland needs to talk to your music app to show what's playing and let you pause and skip songs.</string>
 	<key>NSAudioCaptureUsageDescription</key>
-	<string>Liland uses your music app's sound only to make the equalizer move with the beat. Nothing is recorded or saved.</string>
+	<string>Liland uses your music app's sound to make the equalizer move with the beat and, in Advanced mode, to adjust how the music sounds. Nothing is recorded or saved.</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>© 2026 Flávia Silva</string>
 </dict>

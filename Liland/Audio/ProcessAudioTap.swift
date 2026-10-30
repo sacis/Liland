@@ -1,7 +1,8 @@
 import AudioToolbox
 import CoreAudio
 
-/// Listens to what some processes are playing, without changing what the user hears.
+/// Listens to what some processes are playing. With a `processor`, it also replaces what
+/// the user hears: the processes are muted and the processor plays its version instead.
 /// Exists while it runs: creating it starts the tap, releasing it stops everything.
 @available(macOS 14.4, *)
 final class ProcessAudioTap {
@@ -10,20 +11,25 @@ final class ProcessAudioTap {
 
     let processes: [AudioObjectID]
     let outputDeviceUID: String
+    let processor: AudioProcessor?
+    let isListening: Bool
 
     private var tapID = AudioObjectID(kAudioObjectUnknown)
     private var aggregateID = AudioObjectID(kAudioObjectUnknown)
     private var ioProcID: AudioDeviceIOProcID?
     private let queue = DispatchQueue(label: "Liland.ProcessAudioTap", qos: .userInitiated)
 
-    init?(processes: [AudioObjectID], outputDeviceUID: String, handler: @escaping Handler) {
+    init?(processes: [AudioObjectID], outputDeviceUID: String, processor: AudioProcessor? = nil, handler: Handler?) {
         self.processes = processes
         self.outputDeviceUID = outputDeviceUID
+        self.processor = processor
+        isListening = handler != nil
 
         let description = CATapDescription(stereoMixdownOfProcesses: processes)
         description.uuid = UUID()
         description.isPrivate = true
-        description.muteBehavior = .unmuted
+        // Muted only while Liland reads the tap, so the music comes back if Liland stops or quits.
+        description.muteBehavior = processor == nil ? .unmuted : .mutedWhenTapped
 
         guard AudioHardwareCreateProcessTap(description, &tapID) == noErr else {
             NSLog("Liland: could not create the audio tap")
@@ -61,9 +67,11 @@ final class ProcessAudioTap {
             return nil
         }
 
-        let status = AudioDeviceCreateIOProcIDWithBlock(&ioProcID, aggregateID, queue) { _, input, _, _, _ in
+        let status = AudioDeviceCreateIOProcIDWithBlock(&ioProcID, aggregateID, queue) { _, input, _, output, _ in
             let buffers = UnsafeMutableAudioBufferListPointer(UnsafeMutablePointer(mutating: input))
             guard let buffer = buffers.first, let data = buffer.mData else { return }
+            processor?.render(buffer, into: UnsafeMutableAudioBufferListPointer(output))
+            guard let handler else { return }
             let count = Int(buffer.mDataByteSize) / MemoryLayout<Float>.size
             let samples = UnsafeBufferPointer(start: data.assumingMemoryBound(to: Float.self), count: count)
             handler(samples, max(Int(buffer.mNumberChannels), 1), sampleRate)
@@ -109,13 +117,21 @@ final class ProcessAudioTap {
         defaultOutputDevice?.string(kAudioDevicePropertyDeviceUID)
     }
 
+    /// The rate the current output runs at, which the tap's aggregate device takes on.
+    static var defaultOutputSampleRate: Double? {
+        var sampleRate: Float64 = 0
+        guard let device = defaultOutputDevice,
+              device.read(kAudioDevicePropertyNominalSampleRate, into: &sampleRate),
+              sampleRate > 0
+        else { return nil }
+        return sampleRate
+    }
+
     /// How long sound takes from the tap to the user's ears on the current output,
     /// as the device reports it: a few milliseconds on speakers, much more on Bluetooth.
     static var defaultOutputLatency: TimeInterval? {
-        guard let device = defaultOutputDevice else { return nil }
+        guard let device = defaultOutputDevice, let sampleRate = defaultOutputSampleRate else { return nil }
         let output = kAudioObjectPropertyScopeOutput
-        var sampleRate: Float64 = 0
-        guard device.read(kAudioDevicePropertyNominalSampleRate, into: &sampleRate), sampleRate > 0 else { return nil }
 
         var frames: UInt32 = 0
         for selector in [kAudioDevicePropertyLatency, kAudioDevicePropertySafetyOffset, kAudioDevicePropertyBufferFrameSize] {

@@ -39,10 +39,10 @@ enum BrowserTab {
         "com.microsoft.edgemac": .chromium,
     ]
 
-    /// Sites whose tab is a fair guess even when its title doesn't name the song.
+    /// Music services. Media from any other site (WhatsApp, Instagram, YouTube…) isn't music.
     private static let musicHosts = [
-        "deezer.com", "spotify.com", "youtube.com", "soundcloud.com",
-        "tidal.com", "music.apple.com", "music.amazon.", "bandcamp.com",
+        "deezer.com", "open.spotify.com", "music.youtube.com", "soundcloud.com", "tidal.com",
+        "music.apple.com", "music.amazon.", "bandcamp.com", "qobuz.com", "audiomack.com",
     ]
 
     private struct Tab {
@@ -56,7 +56,7 @@ enum BrowserTab {
     /// allowed to control it, or no tab looks like the song's.
     static func show(_ track: NowPlayingTrack, in bundleIdentifier: String) -> Bool {
         guard let dialect = dialects[bundleIdentifier],
-              let tab = bestTab(for: track, among: tabs(in: bundleIdentifier, dialect))
+              let tab = bestTab(for: track, among: tabs(in: bundleIdentifier, dialect) ?? [])
         else { return false }
         let script = """
             tell application id "\(bundleIdentifier)"
@@ -70,6 +70,29 @@ enum BrowserTab {
         return false
     }
 
+    static func canInspect(_ bundleIdentifier: String) -> Bool {
+        dialects[bundleIdentifier] != nil
+    }
+
+    /// Whether the song plays on a music service, judged by the tab whose title names it.
+    /// A site can rename its tab a moment late, so without such a tab, media that names an
+    /// artist counts while a music service is open. Call it off the main thread; nil when
+    /// the browser can't be asked.
+    static func isMusicSite(_ track: NowPlayingTrack, in bundleIdentifier: String) -> Bool? {
+        guard let dialect = dialects[bundleIdentifier],
+              let tabs = tabs(in: bundleIdentifier, dialect)
+        else { return nil }
+        let named = tabs.filter { $0.title.localizedCaseInsensitiveContains(track.title) }
+        if let tab = bestTab(for: track, among: named) {
+            return isMusicHost(tab.host)
+        }
+        return !track.artist.isEmpty && tabs.contains { isMusicHost($0.host) }
+    }
+
+    private static func isMusicHost(_ host: String) -> Bool {
+        musicHosts.contains(where: host.contains)
+    }
+
     /// The song's title in the tab's title counts most (sites put it there, and browsers
     /// report the page title as Now Playing when a site gives none), then the artist.
     private static func bestTab(for track: NowPlayingTrack, among tabs: [Tab]) -> Tab? {
@@ -78,14 +101,15 @@ enum BrowserTab {
             var score = 0
             if !track.title.isEmpty, tab.title.localizedCaseInsensitiveContains(track.title) { score += 4 }
             if !track.artist.isEmpty, tab.title.localizedCaseInsensitiveContains(track.artist) { score += 2 }
-            if musicHosts.contains(where: tab.host.contains) { score += 1 }
+            if isMusicHost(tab.host) { score += 1 }
             if score > (best?.score ?? 0) { best = (tab, score) }
         }
         return best?.tab
     }
 
-    /// One line per tab: window, tab, title and URL, separated by tabs.
-    private static func tabs(in bundleIdentifier: String, _ dialect: Dialect) -> [Tab] {
+    /// One line per tab: window, tab, title and URL, separated by tabs. nil when the browser
+    /// can't be asked, e.g. Liland isn't allowed to control it.
+    private static func tabs(in bundleIdentifier: String, _ dialect: Dialect) -> [Tab]? {
         let script = """
             tell application id "\(bundleIdentifier)"
                 set output to ""
@@ -102,7 +126,8 @@ enum BrowserTab {
                 return output
             end tell
             """
-        guard case .success(let result) = AppleScript.run(script), let output = result.stringValue else { return [] }
+        guard case .success(let result) = AppleScript.run(script) else { return nil }
+        let output = result.stringValue ?? ""
         return output.split(separator: "\n").compactMap { line in
             let fields = line.split(separator: "\t", omittingEmptySubsequences: false)
             guard fields.count >= 4, let window = Int(fields[0]), let index = Int(fields[1]) else { return nil }

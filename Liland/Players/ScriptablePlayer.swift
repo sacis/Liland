@@ -4,7 +4,8 @@ import Observation
 /// Live state of one scriptable music app (Spotify, Apple Music).
 ///
 /// The app's distributed notification triggers a refresh, and the full state is
-/// read through AppleScript. A slow poll catches changes made from other devices.
+/// read through AppleScript. A slow poll catches changes made from other devices, and
+/// anything a notification or a script missed.
 @Observable
 final class ScriptablePlayer: MusicPlayer, Identifiable {
     let definition: PlayerDefinition
@@ -60,9 +61,9 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             self.applyNotRunning()
         }
 
+        // Not only while the app seems to be running: if that was misread, the next poll fixes it.
         pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
-            guard let self, self.isRunning else { return }
-            self.refresh()
+            self?.refresh()
         }
         pollTimer?.tolerance = 1
 
@@ -99,8 +100,11 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
         case .success(let output):
             permissionDenied = false
             switch output.atIndex(1)?.stringValue {
-            case "notrunning", nil:
+            case "notrunning":
                 applyNotRunning()
+            case nil:
+                // Keep what's shown; the next poll tries again.
+                NSLog("Liland: \(displayName) gave an unexpected answer: \(output)")
             case "stopped":
                 isRunning = true
                 setSnapshot(nil)
@@ -245,6 +249,13 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
     func open() {
         guard let appURL else { return }
         NSWorkspace.shared.openApplication(at: appURL, configuration: NSWorkspace.OpenConfiguration())
+    }
+
+    func openAlbum() {
+        guard let track = snapshot?.track else { return open() }
+        definition.albumLink.url(for: track) { [weak self] url in
+            if let url { NSWorkspace.shared.open(url) } else { self?.open() }
+        }
     }
 
     private var runningApplication: NSRunningApplication? {
