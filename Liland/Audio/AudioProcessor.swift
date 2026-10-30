@@ -1,4 +1,3 @@
-import Accelerate
 import AVFoundation
 import os
 
@@ -10,12 +9,18 @@ import os
 /// about the loudness of the whole song, then the equalizer and a limiter run, then the pitch.
 final class AudioProcessor {
     private static let maximumFrames: AVAudioFrameCount = 4096
-    /// The most kept parts are raised to match the whole song: +12 dB.
-    private static let maximumMakeup: Float = 4
+    /// The most kept parts are raised to match the whole song: +18 dB.
+    private static let maximumMakeup: Float = 8
     /// Seconds over which the loudness of the song and of the kept parts is measured.
     private static let loudnessWindow: Float = 3
     /// Seconds the makeup gain takes to follow a change.
-    private static let makeupTime: Float = 0.5
+    private static let makeupTime: Float = 0.3
+    /// Stretches where the kept parts are this much quieter than the song (-30 dB) are pauses,
+    /// like a singer between verses, and aren't counted: raising the gain there would only
+    /// bring up what leaked from the other instruments.
+    private static let pause: Float = 0.001
+    /// Seconds a stretch must last to count as a pause, longer than the gaps between drum hits.
+    private static let pauseWindow: Float = 0.4
     /// Silence pushed through the pitch stage when it starts, to clear what it held from last time.
     private static let pitchFlush = 2 * Int(maximumFrames)
 
@@ -44,10 +49,17 @@ final class AudioProcessor {
 
     // Only touched on the audio thread.
     private var rendered = Settings()
+    /// Perceived loudness of the song and of the kept parts, averaged over `loudnessWindow`,
+    /// and over `pauseWindow` to tell pauses.
+    private var songMeter: LoudnessMeter
+    private var partsMeter: LoudnessMeter
     private var songPower: Float = 0
     private var partsPower: Float = 0
+    private var recentSongPower: Float = 0
+    private var recentPartsPower: Float = 0
     private var makeup: Float = 1
-    /// Samples to wait after the parts change before the loudness measurements mean anything.
+    /// Samples to wait after the parts change before measuring their loudness: the splitter's
+    /// delay, plus the time for a part to fade in (the bass waits to be sure the song has one).
     private var warmup = 0
 
     init?(sampleRate: Double) {
@@ -69,6 +81,8 @@ final class AudioProcessor {
         self.tone = tone
         self.pitch = pitch
         splitter = StemSplitter(sampleRate: sampleRate)
+        songMeter = LoudnessMeter(sampleRate: sampleRate)
+        partsMeter = LoudnessMeter(sampleRate: sampleRate)
     }
 
     func apply(_ adjustments: AudioAdjustments) {
@@ -142,7 +156,9 @@ final class AudioProcessor {
             // Measure the new parts from scratch; until then, hold the gain where it is.
             songPower = 0
             partsPower = 0
-            warmup = StemSplitter.latency + Int(sampleRate / 10)
+            recentSongPower = 0
+            recentPartsPower = 0
+            warmup = StemSplitter.latency + Int(sampleRate / 2)
         }
         if latest.isPitched && !rendered.isPitched {
             pitch.left.update(repeating: 0, count: Int(Self.maximumFrames))
@@ -154,18 +170,27 @@ final class AudioProcessor {
         rendered = latest
     }
 
-    /// Keeps the chosen parts, then raises them toward the loudness of the whole song,
-    /// so taking instruments away doesn't make the music quieter.
+    /// Keeps the chosen parts, then raises them toward the loudness of the whole song as the
+    /// ear hears it, so taking instruments away doesn't make the music quieter.
     private func isolate(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
-        let smoothing = 1 - exp(-Float(frames) / (sampleRate * Self.loudnessWindow))
-        songPower += (Self.power(left, right, frames) - songPower) * smoothing
+        let song = songMeter.power(left: left, right: right, frames: frames)
         splitter.process(left: left, right: right, frames: frames, keeping: rendered.parts)
-        partsPower += (Self.power(left, right, frames) - partsPower) * smoothing
+        let parts = partsMeter.power(left: left, right: right, frames: frames)
+
+        let duration = Float(frames) / sampleRate
+        let recent = 1 - exp(-duration / Self.pauseWindow)
+        recentSongPower += (song - recentSongPower) * recent
+        recentPartsPower += (parts - recentPartsPower) * recent
+        if warmup <= 0 && recentPartsPower > recentSongPower * Self.pause {
+            let smoothing = 1 - exp(-duration / Self.loudnessWindow)
+            songPower += (song - songPower) * smoothing
+            partsPower += (parts - partsPower) * smoothing
+        }
 
         var target = makeup
         if warmup > 0 {
             warmup -= frames
-        } else if songPower > 1e-8 {
+        } else if songPower > 1e-12 {
             target = min(max((songPower / max(partsPower, 1e-12)).squareRoot(), 1), Self.maximumMakeup)
         }
         let next = makeup + (target - makeup) * (1 - exp(-Float(frames) / (sampleRate * Self.makeupTime)))
@@ -177,13 +202,6 @@ final class AudioProcessor {
             right[frame] *= gain
         }
         makeup = next
-    }
-
-    private static func power(_ left: UnsafePointer<Float>, _ right: UnsafePointer<Float>, _ frames: Int) -> Float {
-        var leftPower: Float = 0, rightPower: Float = 0
-        vDSP_measqv(left, 1, &leftPower, vDSP_Length(frames))
-        vDSP_measqv(right, 1, &rightPower, vDSP_Length(frames))
-        return (leftPower + rightPower) / 2
     }
 
     /// Fills the first two channels of the first output stream (or its only one, mixed down).
@@ -274,5 +292,30 @@ private final class RenderStage {
         }
         var status = OSStatus(noErr)
         return renderBlock(AVAudioFrameCount(frames), outputBuffer.mutableAudioBufferList, &status) == .success
+    }
+}
+
+/// How loud music sounds to the ear, as loudness meters measure it (ITU BS.1770): a high-pass
+/// around 38 Hz and +4 dB above about 1.5 kHz, then the average power of both channels.
+private struct LoudnessMeter {
+    private var leftShelf: Biquad, rightShelf: Biquad
+    private var leftHighPass: Biquad, rightHighPass: Biquad
+
+    init(sampleRate: Double) {
+        leftShelf = .highShelf(1_500, gain: 4, sampleRate: sampleRate)
+        rightShelf = leftShelf
+        leftHighPass = .highPass(38, q: 0.5, sampleRate: sampleRate)
+        rightHighPass = leftHighPass
+    }
+
+    mutating func power(left: UnsafePointer<Float>, right: UnsafePointer<Float>, frames: Int) -> Float {
+        guard frames > 0 else { return 0 }
+        var sum: Float = 0
+        for frame in 0..<frames {
+            let l = leftHighPass.process(leftShelf.process(left[frame]))
+            let r = rightHighPass.process(rightShelf.process(right[frame]))
+            sum += l * l + r * r
+        }
+        return sum / Float(frames)
     }
 }

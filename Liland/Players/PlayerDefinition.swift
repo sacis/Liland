@@ -15,6 +15,7 @@ struct PlayerDefinition {
     /// The app's repeat property: off/one/all when `canRepeatOne`, else a boolean.
     let repeatProperty: String
     let canRepeatOne: Bool
+    let albumLink: AlbumLink
 
     static let spotify = PlayerDefinition(
         bundleIdentifier: "com.spotify.client",
@@ -23,7 +24,8 @@ struct PlayerDefinition {
         artworkURLExpression: "artwork url of t",
         shuffleProperty: "shuffling",
         repeatProperty: "repeating",
-        canRepeatOne: false
+        canRepeatOne: false,
+        albumLink: .spotify
     )
 
     static let appleMusic = PlayerDefinition(
@@ -33,7 +35,8 @@ struct PlayerDefinition {
         artworkURLExpression: nil,
         shuffleProperty: "shuffle enabled",
         repeatProperty: "song repeat",
-        canRepeatOne: true
+        canRepeatOne: true,
+        albumLink: .appleMusic
     )
 
     private var app: String { "application id \"\(bundleIdentifier)\"" }

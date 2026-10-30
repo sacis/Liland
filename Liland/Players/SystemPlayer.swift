@@ -507,4 +507,10 @@ final class SystemPlayer: MusicPlayer {
             }
         }
     }
+
+    /// Only brings the song forward: taking its tab to the album page would reload it and
+    /// stop the music, and another tab of the same site often pauses it too.
+    func openAlbum() {
+        open()
+    }
 }

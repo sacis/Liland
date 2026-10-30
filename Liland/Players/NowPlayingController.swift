@@ -44,8 +44,9 @@ final class NowPlayingController {
         }
     }
 
+    /// Asks every player again, even one that seemed closed: it may have been misread.
     func refresh() {
-        players.filter(\.isRunning).forEach { $0.refresh() }
+        players.filter(\.isInstalled).forEach { $0.refresh() }
     }
 
     // MARK: - State for the views

@@ -49,7 +49,7 @@ struct ExpandedPlayerView: View {
         HStack(spacing: 12) {
             ArtworkView(image: nowPlaying.artwork, cornerRadius: 10)
                 .frame(width: 56, height: 56)
-                .onTapGesture { nowPlaying.activePlayer?.open() }
+                .onTapGesture { nowPlaying.activePlayer?.openAlbum() }
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(verbatim: nowPlaying.track?.title ?? "")

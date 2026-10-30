@@ -28,8 +28,11 @@
 		67F91FFAD566562043188837 /* AudioCapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0A42922862627492394AE3 /* AudioCapturePermission.swift */; };
 		6A0D3B9E2D7F537460091648 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA1C1059B724FEF3406BDAE /* Preferences.swift */; };
 		73D387658B9AA5B4E9D5664D /* AudioLevelMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */; };
+		75C50A1BC6354051834618D1 /* AlbumLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229F1B9E2E088E1EF7BE9F01 /* AlbumLink.swift */; };
 		7CED3778AC950604788379AE /* NotchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54BCDE58F9A7015FC0A3F7F /* NotchRootView.swift */; };
 		89DFB1948B7CEF0D1A33CD01 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B25549D533DC4300E7A5B76D /* Assets.xcassets */; };
+		8D9D7B18DDA4261EC9A30332 /* BassExciter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 80CC98AA108FFB88F7912B2F /* BassExciter.swift */; };
+		8FF4BEFA6493216C74CE5EA1 /* Biquad.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C96BA572AB2C0D5B83BF3A3 /* Biquad.swift */; };
 		944D2205A02A52BFBE5F7E77 /* NowPlayingController.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6BBD7351A8824EE332393AD /* NowPlayingController.swift */; };
 		9A5BE177F373ACDCC05BF3FA /* MessageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E49C768173AE41D83280AC9 /* MessageView.swift */; };
 		9D55F7E47643BD8B445EBDD7 /* NowPlayingHelper.m in Sources */ = {isa = PBXBuildFile; fileRef = 402C688F8C2810EF157EE11E /* NowPlayingHelper.m */; };
@@ -86,6 +89,7 @@
 		1BDB29EA0748F1C9FEC2904E /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1D8DE20824633036CD628E76 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		229DBAF71099822A87E16D6C /* ScriptablePlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScriptablePlayer.swift; sourceTree = "<group>"; };
+		229F1B9E2E088E1EF7BE9F01 /* AlbumLink.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlbumLink.swift; sourceTree = "<group>"; };
 		2B00F6063F0C1730446111FC /* Liland.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Liland.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2B4884C9C653EA6B7DAAE7B0 /* PlayerDefinition.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerDefinition.swift; sourceTree = "<group>"; };
 		3E49C768173AE41D83280AC9 /* MessageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MessageView.swift; sourceTree = "<group>"; };
@@ -108,6 +112,7 @@
 		5224DBBF1B2F8B803685480E /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
 		531E7FED504467C18CEA3F45 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		5766EFAEA356D9F5718EDF10 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		5C96BA572AB2C0D5B83BF3A3 /* Biquad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Biquad.swift; sourceTree = "<group>"; };
 		5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessAudioTap.swift; sourceTree = "<group>"; };
 		628A962F394C40AA21EF0D6F /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6308C89EC378A7794E57C446 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
@@ -120,6 +125,7 @@
 		7BA1C1059B724FEF3406BDAE /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLevelMonitor.swift; sourceTree = "<group>"; };
 		8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
+		80CC98AA108FFB88F7912B2F /* BassExciter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BassExciter.swift; sourceTree = "<group>"; };
 		81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkColor.swift; sourceTree = "<group>"; };
 		841F58C64C56D994B9C0B7E8 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		8780260BAEB824A7A8136E78 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -208,6 +214,8 @@
 				DB0A42922862627492394AE3 /* AudioCapturePermission.swift */,
 				7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */,
 				74960EE844168AEAC98C622C /* AudioProcessor.swift */,
+				80CC98AA108FFB88F7912B2F /* BassExciter.swift */,
+				5C96BA572AB2C0D5B83BF3A3 /* Biquad.swift */,
 				4F8CABE0F211DB534B2132BE /* LiveLevels.swift */,
 				5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */,
 				8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */,
@@ -294,6 +302,7 @@
 		DAE4DDB8AEB2D8F0EC7C852E /* Players */ = {
 			isa = PBXGroup;
 			children = (
+				229F1B9E2E088E1EF7BE9F01 /* AlbumLink.swift */,
 				D21358E5D764C5D63D0CE150 /* AppleScript.swift */,
 				81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */,
 				EF61D7CDA1DD2C38D77CC5C8 /* BrowserTab.swift */,
@@ -441,6 +450,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				75C50A1BC6354051834618D1 /* AlbumLink.swift in Sources */,
 				BCE369476FFAEE78AA348C65 /* AppDelegate.swift in Sources */,
 				FBA8DBC2E1A6FFD063AF852C /* AppleScript.swift in Sources */,
 				4B4594F49040A81701D13C43 /* ArtworkColor.swift in Sources */,
@@ -449,6 +459,8 @@
 				67F91FFAD566562043188837 /* AudioCapturePermission.swift in Sources */,
 				73D387658B9AA5B4E9D5664D /* AudioLevelMonitor.swift in Sources */,
 				B5FCD9850C609D046899839E /* AudioProcessor.swift in Sources */,
+				8D9D7B18DDA4261EC9A30332 /* BassExciter.swift in Sources */,
+				8FF4BEFA6493216C74CE5EA1 /* Biquad.swift in Sources */,
 				A93EA712DB8947F896E8F903 /* BrowserTab.swift in Sources */,
 				367F4747C41A0AFA7E2BBD45 /* CompactView.swift in Sources */,
 				50509B0F293028771F6C953E /* EqualizerView.swift in Sources */,
