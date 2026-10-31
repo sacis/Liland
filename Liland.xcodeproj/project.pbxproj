@@ -16,6 +16,7 @@
 		1C5930BDB8F92C207009C88D /* NotchWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = DED12A053A44F62506EEF72F /* NotchWindowController.swift */; };
 		21EF4F23239237EECB2F730B /* ExpandedPlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6B24F5112B537B426A38030E /* ExpandedPlayerView.swift */; };
 		328CF42C91077B2C2828D947 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 41D54B7BDD61A8F2E2532302 /* InfoPlist.strings */; };
+		363AC5082E0DF12B2B47A335 /* HTDemucs.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = E9B99C1F382E082A68FFFFB7 /* HTDemucs.mlpackage */; };
 		367F4747C41A0AFA7E2BBD45 /* CompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFB13F37F9B9EAF58597F240 /* CompactView.swift */; };
 		3BA741F6C43DA949C63FA3FD /* PlayerSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = 12DBA774EAB396F6A0CB6317 /* PlayerSnapshot.swift */; };
 		3F295198872F2CA6FB252AF6 /* SpectrumAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */; };
@@ -27,6 +28,7 @@
 		658380E51D4D641899E9FCB8 /* NowPlayingHelper.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 3F9BE778BC1B2C026AB98CD7 /* NowPlayingHelper.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		67F91FFAD566562043188837 /* AudioCapturePermission.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB0A42922862627492394AE3 /* AudioCapturePermission.swift */; };
 		6A0D3B9E2D7F537460091648 /* Preferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA1C1059B724FEF3406BDAE /* Preferences.swift */; };
+		6BF0742B1F9A18CE66CA02E3 /* HTDemucs-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 779540805782E72C71D0B86D /* HTDemucs-LICENSE.txt */; };
 		73D387658B9AA5B4E9D5664D /* AudioLevelMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */; };
 		75C50A1BC6354051834618D1 /* AlbumLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 229F1B9E2E088E1EF7BE9F01 /* AlbumLink.swift */; };
 		7CED3778AC950604788379AE /* NotchRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D54BCDE58F9A7015FC0A3F7F /* NotchRootView.swift */; };
@@ -47,6 +49,7 @@
 		D6EC4990F1EFB997A1B0FD1E /* PlaybackProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B129AA8581E1B12167E00877 /* PlaybackProgressView.swift */; };
 		DAD0346B81366456C2180D0F /* NotchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3066ADF51C235F01B0C8C3 /* NotchViewModel.swift */; };
 		DFDD2F6224E88FA4CBC97E97 /* now-playing.pl in Resources */ = {isa = PBXBuildFile; fileRef = 73365F446D041D0854D350EB /* now-playing.pl */; };
+		E83014C9A2102D3B3A4FCB8B /* DemucsSplitter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60349C0902959E40F0569995 /* DemucsSplitter.swift */; };
 		F1F5EBD256AB9C4996C3A896 /* MediaRemoteBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = C99BA621A790383442F76407 /* MediaRemoteBridge.swift */; };
 		F33E93ED21B41437CF55E171 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9EB1E93B5D71C525AF702A47 /* Foundation.framework */; };
 		F6AAC0A78A43DCCEA20A2B52 /* ProcessAudioTap.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */; };
@@ -114,6 +117,7 @@
 		5766EFAEA356D9F5718EDF10 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		5C96BA572AB2C0D5B83BF3A3 /* Biquad.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Biquad.swift; sourceTree = "<group>"; };
 		5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcessAudioTap.swift; sourceTree = "<group>"; };
+		60349C0902959E40F0569995 /* DemucsSplitter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemucsSplitter.swift; sourceTree = "<group>"; };
 		628A962F394C40AA21EF0D6F /* pl */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = pl; path = pl.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		6308C89EC378A7794E57C446 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6B24F5112B537B426A38030E /* ExpandedPlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExpandedPlayerView.swift; sourceTree = "<group>"; };
@@ -122,6 +126,7 @@
 		6E7C3643B6206208221CAED7 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		73365F446D041D0854D350EB /* now-playing.pl */ = {isa = PBXFileReference; lastKnownFileType = text.script.perl; path = "now-playing.pl"; sourceTree = "<group>"; };
 		74960EE844168AEAC98C622C /* AudioProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioProcessor.swift; sourceTree = "<group>"; };
+		779540805782E72C71D0B86D /* HTDemucs-LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "HTDemucs-LICENSE.txt"; sourceTree = "<group>"; };
 		7BA1C1059B724FEF3406BDAE /* Preferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Preferences.swift; sourceTree = "<group>"; };
 		7F01BBEA547481509A452B7B /* AudioLevelMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioLevelMonitor.swift; sourceTree = "<group>"; };
 		8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpectrumAnalyzer.swift; sourceTree = "<group>"; };
@@ -153,6 +158,7 @@
 		D6BBD7351A8824EE332393AD /* NowPlayingController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingController.swift; sourceTree = "<group>"; };
 		DB0A42922862627492394AE3 /* AudioCapturePermission.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioCapturePermission.swift; sourceTree = "<group>"; };
 		DED12A053A44F62506EEF72F /* NotchWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWindowController.swift; sourceTree = "<group>"; };
+		E9B99C1F382E082A68FFFFB7 /* HTDemucs.mlpackage */ = {isa = PBXFileReference; path = HTDemucs.mlpackage; sourceTree = "<group>"; };
 		EAE9A38DAA6F558BF0F87ABC /* fi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fi; path = fi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		EB5100B53AF801807022ACE3 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		ECCC30D1521CCC4581B1B022 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -199,6 +205,8 @@
 			isa = PBXGroup;
 			children = (
 				B25549D533DC4300E7A5B76D /* Assets.xcassets */,
+				779540805782E72C71D0B86D /* HTDemucs-LICENSE.txt */,
+				E9B99C1F382E082A68FFFFB7 /* HTDemucs.mlpackage */,
 				47D8D171B8E3B993504BA1A4 /* Info.plist */,
 				CF067F542CB812044A1AB1CE /* Liland.entitlements */,
 				41D54B7BDD61A8F2E2532302 /* InfoPlist.strings */,
@@ -216,6 +224,7 @@
 				74960EE844168AEAC98C622C /* AudioProcessor.swift */,
 				80CC98AA108FFB88F7912B2F /* BassExciter.swift */,
 				5C96BA572AB2C0D5B83BF3A3 /* Biquad.swift */,
+				60349C0902959E40F0569995 /* DemucsSplitter.swift */,
 				4F8CABE0F211DB534B2132BE /* LiveLevels.swift */,
 				5D6AB6850690A59AF67F1FEA /* ProcessAudioTap.swift */,
 				8076C54E5A1B9235C856F8E3 /* SpectrumAnalyzer.swift */,
@@ -429,6 +438,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				89DFB1948B7CEF0D1A33CD01 /* Assets.xcassets in Resources */,
+				6BF0742B1F9A18CE66CA02E3 /* HTDemucs-LICENSE.txt in Resources */,
 				328CF42C91077B2C2828D947 /* InfoPlist.strings in Resources */,
 				F8C6F9722DCB8C5A18CB8DA8 /* Localizable.strings in Resources */,
 				DFDD2F6224E88FA4CBC97E97 /* now-playing.pl in Resources */,
@@ -463,8 +473,10 @@
 				8FF4BEFA6493216C74CE5EA1 /* Biquad.swift in Sources */,
 				A93EA712DB8947F896E8F903 /* BrowserTab.swift in Sources */,
 				367F4747C41A0AFA7E2BBD45 /* CompactView.swift in Sources */,
+				E83014C9A2102D3B3A4FCB8B /* DemucsSplitter.swift in Sources */,
 				50509B0F293028771F6C953E /* EqualizerView.swift in Sources */,
 				21EF4F23239237EECB2F730B /* ExpandedPlayerView.swift in Sources */,
+				363AC5082E0DF12B2B47A335 /* HTDemucs.mlpackage in Sources */,
 				1B848A4742C874109745E7ED /* LilandApp.swift in Sources */,
 				D6D6BFB47E8229C4A8B4E00A /* LiveLevels.swift in Sources */,
 				F1F5EBD256AB9C4996C3A896 /* MediaRemoteBridge.swift in Sources */,

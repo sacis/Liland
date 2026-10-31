@@ -5,8 +5,9 @@ import os
 /// it and moves it up or down in pitch.
 ///
 /// `render` runs on the audio thread and never waits for the main thread; `apply` runs
-/// on the main thread. The parts are kept first (`StemSplitter`) and brought back up to
-/// about the loudness of the whole song, then the equalizer and a limiter run, then the pitch.
+/// on the main thread. The parts are kept first (`DemucsSplitter`, or `StemSplitter` on Intel
+/// Macs) and brought back up to about the loudness of the whole song, then the equalizer and a
+/// limiter run, then the pitch.
 final class AudioProcessor {
     private static let maximumFrames: AVAudioFrameCount = 4096
     /// The most kept parts are raised to match the whole song: +18 dB.
@@ -44,7 +45,7 @@ final class AudioProcessor {
     /// The pitch delays the sound by about 85 ms even when bypassed, so it's a stage of
     /// its own that only runs while the pitch is changed.
     private let pitch: RenderStage
-    private let splitter: StemSplitter
+    private let splitter: PartSplitter
     private let settings = OSAllocatedUnfairLock(initialState: Settings())
 
     // Only touched on the audio thread.
@@ -80,7 +81,8 @@ final class AudioProcessor {
         else { return nil }
         self.tone = tone
         self.pitch = pitch
-        splitter = StemSplitter(sampleRate: sampleRate)
+        splitter = (DemucsSplitter.isSupported ? DemucsSplitter(sampleRate: sampleRate) : nil)
+            ?? StemSplitter(sampleRate: sampleRate)
         songMeter = LoudnessMeter(sampleRate: sampleRate)
         partsMeter = LoudnessMeter(sampleRate: sampleRate)
     }
@@ -158,7 +160,7 @@ final class AudioProcessor {
             partsPower = 0
             recentSongPower = 0
             recentPartsPower = 0
-            warmup = StemSplitter.latency + Int(sampleRate / 2)
+            warmup = splitter.latency + Int(sampleRate / 2)
         }
         if latest.isPitched && !rendered.isPitched {
             pitch.left.update(repeating: 0, count: Int(Self.maximumFrames))
@@ -226,6 +228,22 @@ final class AudioProcessor {
             }
         }
     }
+}
+
+/// Keeps some parts of stereo music and drops the rest, on the audio thread.
+protocol PartSplitter: AnyObject {
+    /// How many samples the parts lag behind the music.
+    var latency: Int { get }
+    /// Forgets the music heard so far, to start over without echoes of it.
+    func reset()
+    /// Replaces the samples of both channels, in place, with the parts to keep.
+    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: StemSplitter.Parts)
+}
+
+extension DemucsSplitter: PartSplitter {}
+
+extension StemSplitter: PartSplitter {
+    var latency: Int { Self.latency }
 }
 
 /// Apple effects chained in an engine that renders on demand, from `input` to `output`.
