@@ -31,7 +31,7 @@ Não precisa fazer login em nada. O Liland lê direto do Spotify e do app Músic
 
 O botão rosa ali em cima baixa o app pronto. O botão verde "Code" do GitHub baixa só o código-fonte, não é ele que você quer.
 
-## Instalação
+## ★ Instalação
 
 Precisa de **macOS 14 (Sonoma)** ou mais novo. Dá pra conferir em  › Sobre Este Mac.
 
@@ -46,7 +46,7 @@ Na primeira vez que o Spotify ou o Música estiverem abertos, o macOS pergunta s
 
 **Pra atualizar:** feche o Liland (ícone de cápsula › Sair do Liland), baixe o zip de novo e repita a partir do passo 2. Quando o Mac perguntar, escolha *Substituir*.
 
-## Deezer, YouTube e outros sites
+## ★ Deezer, YouTube e outros sites
 
 Spotify e Apple Music funcionam direto. Pro resto (Deezer, YouTube, TIDAL e o que mais tocar no navegador), o Liland usa uma peça extra, o NowPlayingHelper, que o Mac pede pra liberar do mesmo jeito que o próprio Liland:
 
@@ -58,7 +58,7 @@ Depois de atualizar o Liland, às vezes é preciso repetir isso.
 
 Por que esse passo a mais: desde o macOS 15.4, só programas da Apple conseguem ver o que está tocando no sistema. O Liland contorna isso pedindo ao `perl`, que já vem instalado no Mac, pra fazer a leitura. Se alguma atualização do macOS fechar essa brecha, o Deezer e os navegadores param de aparecer, mas o Spotify e o Apple Music continuam funcionando.
 
-## Opções
+## ★ Opções
 
 Ficam todas no ícone de cápsula da barra de menus.
 
@@ -89,7 +89,7 @@ Os agudos do baixo se perdem ao isolar, então, quando a voz não está junto, o
 
 Também tem **Abrir ao iniciar o Mac** e **Sair do Liland**. O idioma segue o do Mac.
 
-## Compilar a partir do código
+## ★ Compilar a partir do código
 
 Se você prefere montar o app no seu Mac em vez de baixar o pronto, os passos estão aqui. No fim, o Liland já fica instalado na pasta Aplicativos.
 
@@ -147,6 +147,6 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 
 </details>
 
-## Créditos
+## ★ Créditos
 
 A leitura do Deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de Jonas van den Berg e colaboradores, sob a licença BSD de 3 cláusulas (veja [NowPlayingHelper/LICENSE](NowPlayingHelper/LICENSE)).
