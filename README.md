@@ -1,121 +1,121 @@
 <h1 align="center">
   <img src="Liland/Resources/Assets.xcassets/AppIcon.appiconset/icon_256.png" width="72" align="absmiddle" alt="">
-  Liland ♡(>ᴗ•)
+  liland ♡(>ᴗ•)
 </h1>
 
 <p align="center">
-  Uma Dynamic Island no notch do MacBook, pra ver e controlar a música que está tocando.
+  uma dynamic island no notch do macbook, pra ver e controlar a música que está tocando.
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Spotify-fbd3e4?style=flat-square" alt="Spotify">
-  <img src="https://img.shields.io/badge/Apple_Music-fbd3e4?style=flat-square" alt="Apple Music">
-  <img src="https://img.shields.io/badge/Deezer-fbd3e4?style=flat-square" alt="Deezer">
-  <img src="https://img.shields.io/badge/YouTube-fbd3e4?style=flat-square" alt="YouTube">
+  <img src="https://img.shields.io/badge/spotify-fbd3e4?style=flat-square" alt="spotify">
+  <img src="https://img.shields.io/badge/apple_music-fbd3e4?style=flat-square" alt="apple music">
+  <img src="https://img.shields.io/badge/deezer-fbd3e4?style=flat-square" alt="deezer">
+  <img src="https://img.shields.io/badge/youtube-fbd3e4?style=flat-square" alt="youtube">
   <img src="https://img.shields.io/badge/e_outros_sites-fbd3e4?style=flat-square" alt="e outros sites">
 </p>
 
 <p align="center">
-  <a href="https://github.com/sacis/Liland/releases/latest/download/Liland.zip"><img src="docs/download.svg" height="52" alt="Baixar o Liland"></a>
+  <a href="https://github.com/sacis/Liland/releases/latest/download/Liland.zip"><img src="docs/download.svg" height="52" alt="baixar o liland"></a>
 </p>
 
 <p align="center">
-  <sub>macOS 14 (Sonoma) ou mais novo · em 20 idiomas · sem login</sub>
+  <sub>macos 14 (sonoma) ou mais novo · em 20 idiomas · sem login</sub>
 </p>
 
 <br>
 
-Quando tem música tocando, o notch cresce e mostra a capa do álbum com um equalizador do lado. Passando o mouse por cima, ele abre um player com a música, o artista, a barra de progresso e os controles, inclusive aleatório e repetir quando o app informa esses modos.
+quando tem música tocando, o notch cresce e mostra a capa do álbum com um equalizador do lado. passando o mouse por cima, ele abre um player com a música, o artista, a barra de progresso e os controles, inclusive aleatório e repetir quando o app informa esses modos.
 
-Não precisa fazer login em nada. O Liland lê direto do Spotify e do app Música e, pros outros apps e sites, do que o Mac mostra em *Tocando Agora* na Central de Controle.
+não precisa fazer login em nada. o liland lê direto do spotify e do app música e, pros outros apps e sites, do que o mac mostra em *tocando agora* na central de controle.
 
-O botão rosa ali em cima baixa o app pronto. O botão verde "Code" do GitHub baixa só o código-fonte, não é ele que você quer.
+o botão rosa ali em cima baixa o app pronto. o botão verde "code" do github baixa só o código-fonte, não é ele que você quer.
 
-## ★ Instalação
+## ★ instalação
 
-Precisa de **macOS 14 (Sonoma)** ou mais novo. Dá pra conferir em  › Sobre Este Mac.
+precisa de **macos 14 (sonoma)** ou mais novo. dá pra conferir em  › sobre este mac.
 
-1. [Baixe o Liland.zip](https://github.com/sacis/Liland/releases/latest/download/Liland.zip). Se ele não descompactar sozinho, dê dois cliques no arquivo dentro de Downloads.
-2. Arraste o **Liland** pra pasta **Aplicativos**.
-3. Abra o Liland. Como ele não vem da App Store, o Mac mostra um aviso dizendo que não pôde verificar o app. Feche o aviso, **sem** clicar em *Mover para o Lixo*.
-4. Vá em Ajustes do Sistema › Privacidade e Segurança, role até o final e clique em **Abrir Mesmo Assim** ao lado da mensagem sobre o Liland. O Mac vai pedir sua senha.
+1. [baixe o liland.zip](https://github.com/sacis/Liland/releases/latest/download/Liland.zip). se ele não descompactar sozinho, dê dois cliques no arquivo dentro de downloads.
+2. arraste o **liland** pra pasta **aplicativos**.
+3. abra o liland. como ele não vem da app store, o mac mostra um aviso dizendo que não pôde verificar o app. feche o aviso, **sem** clicar em *mover para o lixo*.
+4. vá em ajustes do sistema › privacidade e segurança, role até o final e clique em **abrir mesmo assim** ao lado da mensagem sobre o liland. o mac vai pedir sua senha.
 
-Isso só precisa ser feito uma vez. Depois disso o Liland abre normalmente e fica na barra de menus, com um ícone de cápsula.
+isso só precisa ser feito uma vez. depois disso o liland abre normalmente e fica na barra de menus, com um ícone de cápsula.
 
-Na primeira vez que o Spotify ou o Música estiverem abertos, o macOS pergunta se o Liland pode controlá-los. É só clicar em OK. Se negar sem querer, dá pra liberar depois em Ajustes do Sistema › Privacidade e Segurança › Automação.
+na primeira vez que o spotify ou o música estiverem abertos, o macos pergunta se o liland pode controlá-los. é só clicar em ok. se negar sem querer, dá pra liberar depois em ajustes do sistema › privacidade e segurança › automação.
 
-**Pra atualizar:** feche o Liland (ícone de cápsula › Sair do Liland), baixe o zip de novo e repita a partir do passo 2. Quando o Mac perguntar, escolha *Substituir*.
+**pra atualizar:** feche o liland (ícone de cápsula › sair do liland), baixe o zip de novo e repita a partir do passo 2. quando o mac perguntar, escolha *substituir*.
 
-## ★ Deezer, YouTube e outros sites
+## ★ deezer, youtube e outros sites
 
-Spotify e Apple Music funcionam direto. Pro resto (Deezer, YouTube, TIDAL e o que mais tocar no navegador), o Liland usa uma peça extra, o NowPlayingHelper, que o Mac pede pra liberar do mesmo jeito que o próprio Liland:
+spotify e apple music funcionam direto. pro resto (deezer, youtube, tidal e o que mais tocar no navegador), o liland usa uma peça extra, o nowplayinghelper, que o mac pede pra liberar do mesmo jeito que o próprio liland:
 
-1. Sem nada tocando, passe o mouse no notch e clique em **Ativar**. Também dá pelo ícone de cápsula, em *Ativar Deezer e navegadores…*.
-2. Feche o aviso do Mac sobre o NowPlayingHelper, de novo sem mover pro Lixo.
-3. Os Ajustes do Sistema abrem em Privacidade e Segurança. Role até o final e clique em **Abrir Mesmo Assim** ao lado do NowPlayingHelper.
+1. sem nada tocando, passe o mouse no notch e clique em **ativar**. também dá pelo ícone de cápsula, em *ativar deezer e navegadores…*.
+2. feche o aviso do mac sobre o nowplayinghelper, de novo sem mover pro lixo.
+3. os ajustes do sistema abrem em privacidade e segurança. role até o final e clique em **abrir mesmo assim** ao lado do nowplayinghelper.
 
-Depois de atualizar o Liland, às vezes é preciso repetir isso.
+depois de atualizar o liland, às vezes é preciso repetir isso.
 
-Por que esse passo a mais: desde o macOS 15.4, só programas da Apple conseguem ver o que está tocando no sistema. O Liland contorna isso pedindo ao `perl`, que já vem instalado no Mac, pra fazer a leitura. Se alguma atualização do macOS fechar essa brecha, o Deezer e os navegadores param de aparecer, mas o Spotify e o Apple Music continuam funcionando.
+por que esse passo a mais: desde o macos 15.4, só programas da apple conseguem ver o que está tocando no sistema. o liland contorna isso pedindo ao `perl`, que já vem instalado no mac, pra fazer a leitura. se alguma atualização do macos fechar essa brecha, o deezer e os navegadores param de aparecer, mas o spotify e o apple music continuam funcionando.
 
-## ★ Opções
+## ★ opções
 
-Ficam todas no ícone de cápsula da barra de menus.
+ficam todas no ícone de cápsula da barra de menus.
 
-**Mostrar ao trocar de música** abre a ilha por alguns segundos quando a faixa muda.
+**mostrar ao trocar de música** abre a ilha por alguns segundos quando a faixa muda.
 
-**Abrir só ao clicar** faz a ilha abrir só quando você clica no notch, e não mais quando o mouse passa por cima. Pra voltar, use *Abrir ao passar o mouse*.
+**abrir só ao clicar** faz a ilha abrir só quando você clica no notch, e não mais quando o mouse passa por cima. pra voltar, use *abrir ao passar o mouse*.
 
-**Equalizador acompanha a música** faz as barrinhas seguirem a batida de verdade (macOS 14.4 ou mais novo). Na primeira vez, o macOS pede permissão pro Liland acessar o áudio. Ele só mede o som na hora, não grava nem salva nada. Se você negar, as barrinhas continuam com a animação de sempre e aparece no menu a opção *Permitir acesso ao áudio nos Ajustes…* pra liberar depois.
+**equalizador acompanha a música** faz as barrinhas seguirem a batida de verdade (macos 14.4 ou mais novo). na primeira vez, o macos pede permissão pro liland acessar o áudio. ele só mede o som na hora, não grava nem salva nada. se você negar, as barrinhas continuam com a animação de sempre e aparece no menu a opção *permitir acesso ao áudio nos ajustes…* pra liberar depois.
 
-**Avançado** coloca controles de som embaixo do player aberto (também macOS 14.4 ou mais novo, com a mesma permissão de áudio):
+**avançado** coloca controles de som embaixo do player aberto (também macos 14.4 ou mais novo, com a mesma permissão de áudio):
 
-- **Voz**, **Guitarra**, **Baixo** e **Bateria** tocam só as partes que você escolher, no volume da música inteira. Dá pra combinar mais de uma. Clicar de novo numa parte tira ela, e tirando todas a música volta inteira. A Guitarra só aparece nos Macs com chip Apple e, como usa uma separação à parte, leva um instante pra entrar quando é escolhida.
-- **Equalizador** de cinco faixas, dos graves (80 Hz) aos agudos (10 kHz), de −12 a +12 dB.
-- **Tom** sobe ou desce a música até 6 semitons sem mudar a velocidade.
-- **↺** volta tudo ao normal. Os ajustes ficam salvos pra próxima vez.
+- **voz**, **guitarra**, **baixo** e **bateria** tocam só as partes que você escolher, no volume da música inteira. dá pra combinar mais de uma. clicar de novo numa parte tira ela, e tirando todas a música volta inteira. a guitarra só aparece nos macs com chip apple e, como usa uma separação à parte, leva um instante pra entrar quando é escolhida.
+- **equalizador** de cinco faixas, dos graves (80 hz) aos agudos (10 khz), de −12 a +12 db.
+- **tom** sobe ou desce a música até 6 semitons sem mudar a velocidade.
+- **↺** volta tudo ao normal. os ajustes ficam salvos pra próxima vez.
 
-Com o Avançado ligado, quem toca a música é o Liland, já ajustada, no lugar do app. Por isso o som atrasa um pouco: cerca de três décimos de segundo ao isolar partes (um oitavo nos Macs com Intel) e mais um décimo ao mudar o tom. Num vídeo, a boca fica um pouco fora de sincronia com a voz. Desligando o modo ou fechando o Liland, o som volta direto do app.
+com o avançado ligado, quem toca a música é o liland, já ajustada, no lugar do app. por isso o som atrasa um pouco: cerca de três décimos de segundo ao isolar partes (um oitavo nos macs com intel) e mais um décimo ao mudar o tom. num vídeo, a boca fica um pouco fora de sincronia com a voz. desligando o modo ou fechando o liland, o som volta direto do app.
 
 <details>
-<summary>Como o Liland separa voz, guitarra, baixo e bateria</summary>
+<summary>como o liland separa voz, guitarra, baixo e bateria</summary>
 <br>
 
-Nos Macs com chip Apple, o Liland usa o HTDemucs, uma rede neural da Meta treinada com músicas gravadas parte por parte. Ela roda no próprio Mac, sem mandar nada pra internet. Voz, baixo e bateria vêm de um modelo. A guitarra é o resto da música nesse modelo, filtrado por um segundo modelo que reconhece guitarra e só liga enquanto ela está escolhida: assim ela vem com o corpo inteiro. A rede precisa ouvir um pedaço da música pra separar, e é daí que vem o atraso de três décimos de segundo. É bem mais limpo que uma estimativa, mas não é perfeito: num trecho muito cheio ainda aparece um pouco dos outros instrumentos, e a guitarra pode trazer junto um teclado ou sintetizador de som parecido.
+nos macs com chip apple, o liland usa o htdemucs, uma rede neural da meta treinada com músicas gravadas parte por parte. ela roda no próprio mac, sem mandar nada pra internet. voz, baixo e bateria vêm de um modelo. a guitarra é o resto da música nesse modelo, filtrado por um segundo modelo que reconhece guitarra e só liga enquanto ela está escolhida: assim ela vem com o corpo inteiro. a rede precisa ouvir um pedaço da música pra separar, e é daí que vem o atraso de três décimos de segundo. é bem mais limpo que uma estimativa, mas não é perfeito: num trecho muito cheio ainda aparece um pouco dos outros instrumentos, e a guitarra pode trazer junto um teclado ou sintetizador de som parecido.
 
-Nos Macs com Intel, que não rodam a rede rápido o bastante, a separação é uma estimativa feita na hora. O Liland reconhece a voz e o baixo por estarem no centro da mixagem, então instrumentos que também estão no centro ainda aparecem um pouco, e um instrumento muito parecido com bateria (um violão bem batido, por exemplo) pode vazar nela.
+nos macs com intel, que não rodam a rede rápido o bastante, a separação é uma estimativa feita na hora. o liland reconhece a voz e o baixo por estarem no centro da mixagem, então instrumentos que também estão no centro ainda aparecem um pouco, e um instrumento muito parecido com bateria (um violão bem batido, por exemplo) pode vazar nela.
 
 </details>
 
-Também tem **Abrir ao iniciar o Mac** e **Sair do Liland**. O idioma segue o do Mac.
+também tem **abrir ao iniciar o mac** e **sair do liland**. o idioma segue o do mac.
 
-## ★ Compilar a partir do código
+## ★ compilar a partir do código
 
-Se você prefere montar o app no seu Mac em vez de baixar o pronto, os passos estão aqui. No fim, o Liland já fica instalado na pasta Aplicativos.
+se você prefere montar o app no seu mac em vez de baixar o pronto, os passos estão aqui. no fim, o liland já fica instalado na pasta aplicativos.
 
 <details>
-<summary>Ver o passo a passo</summary>
+<summary>ver o passo a passo</summary>
 <br>
 
-Primeiro instale o [Xcode pela App Store](https://apps.apple.com/app/xcode/id497799835). É gratuito, mas o download é grande. Quando terminar, abra o Xcode uma vez, aceite os termos e espere ele instalar os componentes. Depois pode fechar.
+primeiro instale o [xcode pela app store](https://apps.apple.com/app/xcode/id497799835). é gratuito, mas o download é grande. quando terminar, abra o xcode uma vez, aceite os termos e espere ele instalar os componentes. depois pode fechar.
 
-Agora abra o Terminal (<kbd>⌘</kbd> <kbd>Espaço</kbd>, digite *Terminal* e aperte <kbd>Enter</kbd>). Em cada passo abaixo, copie o comando, cole no Terminal e aperte <kbd>Enter</kbd>, esperando um terminar antes de colar o próximo. Se ele pedir senha, é a senha do Mac. É normal não aparecer nada na tela enquanto você digita.
+agora abra o terminal (<kbd>⌘</kbd> <kbd>espaço</kbd>, digite *terminal* e aperte <kbd>enter</kbd>). em cada passo abaixo, copie o comando, cole no terminal e aperte <kbd>enter</kbd>, esperando um terminar antes de colar o próximo. se ele pedir senha, é a senha do mac. é normal não aparecer nada na tela enquanto você digita.
 
-**1.** Instale o Homebrew. Se você já tem, pule este passo.
+**1.** instale o homebrew. se você já tem, pule este passo.
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
-Aperte <kbd>Enter</kbd> quando ele pedir pra continuar. Se no final aparecer uma parte chamada **Next steps** com mais comandos, rode esses também. Depois feche o Terminal e abra de novo.
+aperte <kbd>enter</kbd> quando ele pedir pra continuar. se no final aparecer uma parte chamada **next steps** com mais comandos, rode esses também. depois feche o terminal e abra de novo.
 
-**2.** Instale o XcodeGen.
+**2.** instale o xcodegen.
 
 ```bash
 brew install xcodegen
 ```
 
-**3.** Baixe e instale o Liland. Pode colar as três linhas de uma vez.
+**3.** baixe e instale o liland. pode colar as três linhas de uma vez.
 
 ```bash
 git clone https://github.com/sacis/Liland.git
@@ -123,9 +123,9 @@ cd Liland
 ./scripts/build.sh --install
 ```
 
-O código fica numa pasta `Liland` dentro da sua pasta pessoal. A montagem leva alguns minutos e termina com **✓ Instalado em /Applications/Liland.app**. O Liland abre sozinho e já aparece na barra de menus.
+o código fica numa pasta `Liland` dentro da sua pasta pessoal. a montagem leva alguns minutos e termina com **✓ instalado em /applications/liland.app**. o liland abre sozinho e já aparece na barra de menus.
 
-**Pra atualizar** depois:
+**pra atualizar** depois:
 
 ```bash
 cd ~/Liland
@@ -133,20 +133,20 @@ git pull
 ./scripts/build.sh --install
 ```
 
-**Se der erro**
+**se der erro**
 
-`command not found: brew` quer dizer que o Homebrew não terminou de instalar. Rode o comando do passo 1 de novo, sem esquecer os comandos do **Next steps**.
+`command not found: brew` quer dizer que o homebrew não terminou de instalar. rode o comando do passo 1 de novo, sem esquecer os comandos do **next steps**.
 
-`xcodebuild requires Xcode` ou `xcode-select: error` quer dizer que o Terminal não está achando o Xcode. Confira se ele está na pasta Aplicativos e rode:
+`xcodebuild requires Xcode` ou `xcode-select: error` quer dizer que o terminal não está achando o xcode. confira se ele está na pasta aplicativos e rode:
 
 ```bash
 sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ```
 
-`destination path 'Liland' already exists` quer dizer que você já baixou o Liland antes. Use os comandos de atualizar.
+`destination path 'Liland' already exists` quer dizer que você já baixou o liland antes. use os comandos de atualizar.
 
 </details>
 
-## ★ Créditos
+## ★ créditos
 
-A leitura do Deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de Jonas van den Berg e colaboradores, sob a licença BSD de 3 cláusulas (veja [NowPlayingHelper/LICENSE](NowPlayingHelper/LICENSE)).
+a leitura do deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de jonas van den berg e colaboradores, sob a licença bsd de 3 cláusulas (veja [nowplayinghelper/license](NowPlayingHelper/LICENSE)).
