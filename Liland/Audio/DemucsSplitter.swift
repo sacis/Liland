@@ -3,92 +3,66 @@ import AVFoundation
 import CoreML
 import os
 
-/// Splits stereo music into vocals, bass and drums with HTDemucs, a neural network trained on
-/// songs recorded part by part (Meta's Hybrid Transformer Demucs, MIT license), run by Core ML
-/// on the GPU. `StemSplitter` can only guess the parts from how they look in a spectrogram;
-/// this one has learned what they sound like.
+/// Splits stereo music into vocals, guitar, bass and drums with HTDemucs, a neural network trained
+/// on songs recorded part by part (Meta's Hybrid Transformer Demucs, MIT license), run by Core ML
+/// on the GPU. `StemSplitter` can only guess the parts from how they look in a spectrogram; this
+/// one has learned what they sound like.
 ///
-/// The network needs to hear a stretch of music, so every `hop` it gets the last second of it
-/// (`window`), and only the stretch of its answer that ends `ahead` before the newest sample is
-/// kept, crossfaded with the one kept before. Each sample is so separated knowing a second of
-/// what came before it and at least `ahead` of what follows, and the parts come out `latency`
-/// late: under a third of a second.
+/// Two networks share the work (`Network`). HTDemucs gives the vocals, the bass and the drums, and
+/// "the rest", which holds the guitar with all its body. Its six-source sibling then tells, in
+/// each sliver of the spectrogram, how much of that is guitar rather than piano or anything
+/// else: alone it misses much of the guitar's body. HTDemucs runs while any part is kept, so
+/// changing parts is instant, and its sibling only while the guitar is, which is heard `latency`
+/// after being chosen.
 ///
-/// The network takes longer than an audio buffer lasts, so it runs on a thread of its own:
+/// A network needs to hear a stretch of music, so every `hop` it gets the last stretch of it
+/// (`Network.frames`: a second, or two to make out the guitar), and only the part of its answer
+/// that ends `ahead` before the newest sample is kept, crossfaded with the one kept before. Each
+/// sample is so separated knowing what came before it and at least `ahead` of what follows, and
+/// the parts come out `latency` late: under a third of a second.
+///
+/// The networks take longer than an audio buffer lasts, so they run on a thread of their own:
 /// `process` only hands it the music and takes back what's ready, without ever waiting for it.
-/// What isn't ready in time comes out silent, which happens when the GPU, shared with the
-/// screen and the browser, now and then stalls for a few tenths of a second. It always
-/// separates all three parts, so changing the ones kept is instant. Not thread-safe: feed it
+/// What isn't ready in time comes out silent, which happens when the GPU, shared with the screen
+/// and the browser, now and then stalls for a few tenths of a second. Not thread-safe: feed it
 /// from one thread.
 final class DemucsSplitter {
     typealias Parts = StemSplitter.Parts
 
-    /// The network's sample rate, and its spectrogram: frames of `fftSize` samples every
+    /// The networks' sample rate, and their spectrogram: frames of `fftSize` samples every
     /// `fftHop`, without the top frequency.
     fileprivate static let rate: Double = 44_100
     fileprivate static let fftSize = 4096
     fileprivate static let fftHop = 1024
     fileprivate static let bins = 2048
-    fileprivate static let frames = 44
-    /// The music the network hears at once: about a second.
-    fileprivate static let window = frames * fftHop
-    /// How often the network runs (93 ms), how much of what follows a sample is heard before
+    /// How often the networks run (93 ms), how much of what follows a sample is heard before
     /// it's separated (93 ms), and how long consecutive stretches crossfade (23 ms).
     fileprivate static let hop = 4096
     fileprivate static let ahead = 4096
     fileprivate static let fade = 1024
-    /// Seconds left for the network to finish on top of that, once the window's last audio
-    /// buffer is in: on an M5 it takes about 20 ms, and up to 50 ms while the browser uses the GPU.
-    fileprivate static let margin = 0.08
-    /// Where each of `Parts` (vocals, bass, drums) is among the network's sources (drums,
-    /// bass, other, vocals).
-    fileprivate static let sources = [3, 1, 0]
+    /// Seconds left for the networks to finish on top of that, once the window's last audio
+    /// buffer is in: on an M5 HTDemucs takes about 30 ms, and with the guitar both networks
+    /// about 45 ms and up to 70 ms while the browser uses the GPU.
+    fileprivate static let margin = 0.1
+    /// The parts, one for each bit of `Parts`: vocals, bass, drums and guitar.
+    fileprivate static let partCount = 4
     /// Samples over which the parts fade out when they're about to run out, because the
-    /// network is late, and back in once they're there again, so a gap doesn't click.
+    /// networks are late, and back in once they're there again, so a gap doesn't click.
     private static let ramp = 256
 
-    /// Apple silicon runs the network several times faster than it needs to; Intel Macs keep `StemSplitter`.
+    /// Apple silicon runs the networks several times faster than they need to; Intel Macs keep `StemSplitter`.
     static var isSupported: Bool {
         #if arch(arm64)
-        modelURL != nil
+        Network.separating.isBundled
         #else
         false
         #endif
     }
 
-    private static var modelURL: URL? {
-        Bundle.main.url(forResource: "HTDemucs", withExtension: "mlmodelc")
+    /// Whether the guitar can be kept as well.
+    static var canIsolateGuitar: Bool {
+        isSupported && Network.guitar.isBundled
     }
-
-    /// The network, loaded once for the whole app by the first worker that needs it.
-    fileprivate static let network: MLModel? = {
-        guard let url = modelURL else {
-            NSLog("Liland: the HTDemucs model is missing")
-            return nil
-        }
-        let configuration = MLModelConfiguration()
-        // On the Neural Engine some of its half-precision sums overflow and the parts come out wrong.
-        configuration.computeUnits = .cpuAndGPU
-        do {
-            let started = CFAbsoluteTimeGetCurrent()
-            let model = try MLModel(contentsOf: url, configuration: configuration)
-            // The first run sets up the GPU and takes seconds, so it's done now rather than
-            // on the music.
-            let silence = try MLDictionaryFeatureProvider(dictionary: [
-                "spectrum": MLMultiArray(shape: [1, 4, bins, frames].map { $0 as NSNumber }, dataType: .float32),
-                "wave": MLMultiArray(shape: [1, 2, window].map { $0 as NSNumber }, dataType: .float32),
-            ])
-            _ = try model.prediction(from: silence)
-            NSLog("Liland: HTDemucs ready in %.1f s", CFAbsoluteTimeGetCurrent() - started)
-            return model
-        } catch {
-            NSLog("Liland: could not load the HTDemucs model: \(error)")
-            return nil
-        }
-    }()
-
-    /// Keeps two workers (an old one finishing while a new one starts) from running the network at once.
-    fileprivate static let predicting = NSLock()
 
     /// How many samples the parts lag behind the music.
     let latency: Int
@@ -135,10 +109,11 @@ final class DemucsSplitter {
         let first = written - latency
         written += frames
         // Never waits: if the worker happens to hold the lock, it hears of this music next time.
-        let written = written, restart = restart
+        let written = written, restart = restart, kept = parts.rawValue
         if let state = exchange.state.withLockIfAvailable({ state -> Exchange.State in
             state.written = written
             state.restart = restart
+            state.parts = kept
             return state
         }) {
             produced = state.produced
@@ -146,7 +121,7 @@ final class DemucsSplitter {
             hasFailed = state.hasFailed
         }
         exchange.wakeUp.signal()
-        // Without the network, the whole song rather than nothing.
+        // Without the networks, the whole song rather than nothing.
         guard !hasFailed else { return }
 
         let start = max(restart, origin)
@@ -158,7 +133,7 @@ final class DemucsSplitter {
                 // On time, the parts are ready well ahead of `position`: tens of milliseconds.
                 gain = produced - position > Self.ramp ? min(gain + step, 1) : max(gain - step, 0)
                 let slot = position & wrap
-                for part in 0..<Self.sources.count where parts.contains(Parts(rawValue: UInt8(1 << part))) {
+                for part in 0..<Self.partCount where parts.contains(Parts(rawValue: UInt8(1 << part))) {
                     leftSum += exchange.output[2 * part * capacity + slot]
                     rightSum += exchange.output[(2 * part + 1) * capacity + slot]
                 }
@@ -172,6 +147,98 @@ final class DemucsSplitter {
     }
 }
 
+/// One of the networks, loaded once for the whole app, the first time a worker needs it.
+private final class Network {
+    /// HTDemucs: its sources are drums, bass, other and vocals.
+    static let separating = Network(name: "HTDemucs", sources: 4, frames: 44)
+    /// HTDemucs 6s, whose sources are drums, bass, other, vocals, guitar and piano. It only tells
+    /// the guitar apart, since its other parts come out a little worse, and it needs to hear twice
+    /// as much music to do it well.
+    static let guitar = Network(name: "HTDemucs6s", sources: 6, frames: 88)
+
+    /// Keeps two workers (an old one finishing while a new one starts) from running a network at once.
+    static let predicting = NSLock()
+
+    let name: String
+    let sources: Int
+    /// How many spectrogram frames it hears at once.
+    let frames: Int
+
+    private let lock = NSLock()
+    /// Held while loading, so a second worker waits for the first one's network.
+    private let loading = NSLock()
+    private var model: MLModel?
+    private var hasStarted = false
+    private var hasFailed = false
+
+    private init(name: String, sources: Int, frames: Int) {
+        self.name = name
+        self.sources = sources
+        self.frames = frames
+    }
+
+    var isBundled: Bool {
+        url != nil
+    }
+
+    private var url: URL? {
+        Bundle.main.url(forResource: name, withExtension: "mlmodelc")
+    }
+
+    /// The network, loaded first on this thread if no one has yet; nil if it can't be.
+    func loadedModel() -> MLModel? {
+        loading.lock()
+        defer { loading.unlock() }
+        let (model, hasFailed) = lock.withLock { (self.model, self.hasFailed) }
+        if model != nil || hasFailed { return model }
+        let loaded = load()
+        lock.withLock {
+            self.model = loaded
+            self.hasFailed = loaded == nil
+        }
+        return loaded
+    }
+
+    /// The network if it's loaded by now; otherwise it starts loading in the background.
+    func modelIfLoaded() -> MLModel? {
+        let (model, shouldStart) = lock.withLock { () -> (MLModel?, Bool) in
+            let shouldStart = !hasStarted && self.model == nil
+            hasStarted = true
+            return (self.model, shouldStart)
+        }
+        if shouldStart {
+            DispatchQueue.global(qos: .userInitiated).async { _ = self.loadedModel() }
+        }
+        return model
+    }
+
+    private func load() -> MLModel? {
+        guard let url else {
+            NSLog("Liland: the %@ model is missing", name)
+            return nil
+        }
+        let configuration = MLModelConfiguration()
+        // On the Neural Engine its normalizations blow up its rounding errors, and the parts come out wrong.
+        configuration.computeUnits = .cpuAndGPU
+        do {
+            let started = CFAbsoluteTimeGetCurrent()
+            let model = try MLModel(contentsOf: url, configuration: configuration)
+            // The first run sets up the GPU and takes seconds, so it's done now rather than
+            // on the music.
+            let silence = try MLDictionaryFeatureProvider(dictionary: [
+                "spectrum": MLMultiArray(shape: [1, 4, DemucsSplitter.bins, frames].map { $0 as NSNumber }, dataType: .float32),
+                "wave": MLMultiArray(shape: [1, 2, frames * DemucsSplitter.fftHop].map { $0 as NSNumber }, dataType: .float32),
+            ])
+            _ = try model.prediction(from: silence)
+            NSLog("Liland: %@ ready in %.1f s", name, CFAbsoluteTimeGetCurrent() - started)
+            return model
+        } catch {
+            NSLog("Liland: could not load the %@ model: \(error)", name)
+            return nil
+        }
+    }
+}
+
 /// What the audio thread and the worker hand each other.
 private final class Exchange {
     struct State {
@@ -179,6 +246,8 @@ private final class Exchange {
         var written = 0
         /// Where the music last started again: what came before it is another stretch of music.
         var restart = 0
+        /// The parts kept, by the audio thread, so the worker runs only the networks they need.
+        var parts: UInt8 = 0
         /// Samples of parts written to `output`, by the worker, from `origin` on.
         var produced = 0
         var origin = 0
@@ -195,7 +264,7 @@ private final class Exchange {
     /// The music at the device's rate: its left channel, then its right.
     let input = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * capacity)
     /// The parts at the device's rate, in the order of `Parts`: each one's left channel, then its right.
-    let output = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * DemucsSplitter.sources.count * capacity)
+    let output = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * DemucsSplitter.partCount * capacity)
 
     init() {
         input.initialize(repeating: 0)
@@ -208,37 +277,117 @@ private final class Exchange {
     }
 }
 
-/// Runs the network on its own thread, from the music in `exchange.input` to the parts in `exchange.output`.
+/// Runs the networks on its own thread, from the music in `exchange.input` to the parts in `exchange.output`.
 private final class Worker {
     private typealias Splitter = DemucsSplitter
+    private typealias Parts = DemucsSplitter.Parts
 
-    /// The most music, in samples at the network's rate, kept to make up the next windows.
+    /// A network as this worker runs it: the window of music it hears and the spectrogram it
+    /// gets, normalized, and its answers, all written in place; and the network itself once it
+    /// has run into them, since its first run into new buffers is slower.
+    private final class Run {
+        let network: Network
+        let frames: Int
+        let window: Int
+        /// Where the stretch kept starts in the window, and the spectrogram frames that cover it.
+        let regionStart: Int
+        let firstFrame: Int
+        let lastFrame: Int
+        /// The window's spectrogram before normalizing, kept for the next window, which shares most of it.
+        let rawSpectrum: UnsafeMutableBufferPointer<Float>
+        let spectrum: UnsafeMutableBufferPointer<Float>
+        let wave: UnsafeMutableBufferPointer<Float>
+        let spectra: UnsafeMutableBufferPointer<Float>
+        let waves: UnsafeMutableBufferPointer<Float>
+        let inputs: MLFeatureProvider
+        let options = MLPredictionOptions()
+        var model: MLModel?
+        /// The end of the window `rawSpectrum` is the spectrogram of, while it's still of use.
+        var transformedEnd: Int?
+        /// The normalization of the spectrogram and the window, to undo on the answers.
+        var spectrumScale: Float = 1, spectrumShift: Float = 0
+        var waveScale: Float = 1, waveShift: Float = 0
+
+        init(network: Network) throws {
+            let bins = Splitter.bins
+            self.network = network
+            frames = network.frames
+            window = frames * Splitter.fftHop
+            regionStart = window - Splitter.ahead - Splitter.hop - Splitter.fade
+            firstFrame = max(0, (regionStart - (Splitter.fftSize - Worker.frameOffset)) / Splitter.fftHop + 1)
+            lastFrame = min(frames - 1, (regionStart + Worker.regionLength + Worker.frameOffset - 1) / Splitter.fftHop)
+            rawSpectrum = .allocate(capacity: 4 * bins * frames)
+            spectrum = .allocate(capacity: 4 * bins * frames)
+            wave = .allocate(capacity: 2 * window)
+            spectra = .allocate(capacity: 4 * network.sources * bins * frames)
+            waves = .allocate(capacity: 2 * network.sources * window)
+            for buffer in [rawSpectrum, spectrum, wave, spectra, waves] {
+                buffer.initialize(repeating: 0)
+            }
+            inputs = try MLDictionaryFeatureProvider(dictionary: [
+                "spectrum": try Self.array(spectrum, [1, 4, bins, frames]),
+                "wave": try Self.array(wave, [1, 2, window]),
+            ])
+            options.outputBackings = [
+                "spectra": try Self.array(spectra, [1, 4 * network.sources, bins, frames]),
+                "waves": try Self.array(waves, [1, 2 * network.sources, window]),
+            ]
+        }
+
+        deinit {
+            [rawSpectrum, spectrum, wave, spectra, waves].forEach { $0.deallocate() }
+        }
+
+        private static func array(_ buffer: UnsafeMutableBufferPointer<Float>, _ shape: [Int]) throws -> MLMultiArray {
+            let strides = shape.indices.map { shape[($0 + 1)...].reduce(1, *) }
+            return try MLMultiArray(
+                dataPointer: buffer.baseAddress!,
+                shape: shape.map { $0 as NSNumber },
+                dataType: .float32,
+                strides: strides.map { $0 as NSNumber }
+            )
+        }
+    }
+
+    /// Which sources of HTDemucs are vocals, bass and drums (the first parts), and "the rest".
+    private static let separatedSources = [3, 1, 0]
+    private static let restSource = 2
+    /// Which sources of HTDemucs 6s are the guitar, the piano and the rest of the music.
+    private static let guitarSources = (guitar: 4, piano: 5, rest: 2)
+    private static let guitarPart = 3
+
+    /// The most music, in samples at the networks' rate, kept to make up the next windows.
     private static let musicCapacity = 1 << 17
     /// Device samples taken from `exchange.input` at a time.
     private static let chunk = 4096
-    /// Where each stretch kept starts and ends in the window, and which spectrogram frames cover it.
-    private static let regionStart = Splitter.window - Splitter.ahead - Splitter.hop - Splitter.fade
     private static let regionLength = Splitter.hop + Splitter.fade
-    private static let firstFrame = max(0, (regionStart - (Splitter.fftSize - frameOffset)) / Splitter.fftHop + 1)
-    private static let lastFrame = min(Splitter.frames - 1, (regionStart + regionLength + frameOffset - 1) / Splitter.fftHop)
     /// The spectrogram's frame `t` starts at `t * fftHop - frameOffset`, mirroring the music
     /// past the window's edges, as HTDemucs pads it.
     private static let frameOffset = Splitter.fftHop / 2 * 3
+    /// The first frame wholly inside a window, and how many frames the window moves each `hop`.
+    private static let firstInnerFrame = (frameOffset + Splitter.fftHop - 1) / Splitter.fftHop
+    private static let frameShift = Splitter.hop / Splitter.fftHop
     /// Network runs timed before saying how long they take.
     private static let timedRuns = 100
-    /// A window this late (at the network's rate) would come out entirely after its time.
+    /// A window this late (at the networks' rate) would come out entirely after its time.
     private static let lateness = Splitter.hop + Int(Splitter.margin * Splitter.rate)
+    /// A second of music quieter than this throughout (-120 dB) is silence, like a paused song:
+    /// the networks' answer is scaled by the music's level, so it would come out silent too.
+    private static let silence: Float = 1e-6
 
     private let exchange: Exchange
-    /// When the device's rate isn't the network's, the music on its way in, and each part on its way out.
+    /// When the device's rate isn't the networks', the music on its way in, and each part on its way out.
     private let toNetwork: RateConverter?
     private let fromNetwork: [RateConverter]
+    private let separating: Run
+    /// Set up the first time the guitar is chosen, with HTDemucs 6s.
+    private var guitar: Run?
 
     // Positions at the device's rate.
     private var lastRestart = 0
     private var consumed = 0
     private var produced = 0
-    // Positions at the network's rate, from where the music started.
+    // Positions at the networks' rate, from where the music started.
     private var heard = 0
     private var nextEnd = 0
 
@@ -250,27 +399,23 @@ private final class Worker {
     /// Fades each stretch in over its first `fade` samples and out over its last.
     private let crossfade: UnsafeMutableBufferPointer<Float>
 
-    /// The music at the network's rate, its left channel then its right, in a circle.
+    /// The music at the networks' rate, its left channel then its right, in a circle.
     private let music: UnsafeMutableBufferPointer<Float>
     private let frame: UnsafeMutableBufferPointer<Float>
     private let evenSamples: UnsafeMutableBufferPointer<Float>
     private let oddSamples: UnsafeMutableBufferPointer<Float>
     private let real: UnsafeMutableBufferPointer<Float>
     private let imaginary: UnsafeMutableBufferPointer<Float>
+    /// One frame of each part the guitar is told apart from: the rest by HTDemucs, then the
+    /// guitar, piano and rest by HTDemucs 6s, and the power of the last three.
+    private let slices: UnsafeMutableBufferPointer<Float>
+    private let powers: UnsafeMutableBufferPointer<Float>
     /// The stretch being kept, then the end of the one before, for each part's left and right.
     private let region: UnsafeMutableBufferPointer<Float>
     private let tail: UnsafeMutableBufferPointer<Float>
     private let scratch: UnsafeMutableBufferPointer<Float>
 
-    // The network's inputs and outputs, written and read in place.
-    private let spectrum: UnsafeMutableBufferPointer<Float>
-    private let wave: UnsafeMutableBufferPointer<Float>
-    private let spectra: UnsafeMutableBufferPointer<Float>
-    private let waves: UnsafeMutableBufferPointer<Float>
-    private let inputs: MLFeatureProvider
-    private let options = MLPredictionOptions()
-
-    private var runs = 0
+    private var timedRunCount = 0
     private var runTime = 0.0
     private var longestRun = 0.0
     private var skipped = 0
@@ -283,15 +428,15 @@ private final class Worker {
             fromNetwork = []
         } else {
             guard let toNetwork = RateConverter(from: sampleRate, to: Splitter.rate, frames: Self.chunk) else { return nil }
-            let fromNetwork = Splitter.sources.compactMap { _ in
+            let fromNetwork = (0..<Splitter.partCount).compactMap { _ in
                 RateConverter(from: Splitter.rate, to: sampleRate, frames: Splitter.hop)
             }
-            guard fromNetwork.count == Splitter.sources.count else { return nil }
+            guard fromNetwork.count == Splitter.partCount else { return nil }
             self.toNetwork = toNetwork
             self.fromNetwork = fromNetwork
         }
 
-        let size = Splitter.fftSize, bins = Splitter.bins, frames = Splitter.frames, window = Splitter.window
+        let size = Splitter.fftSize, bins = Splitter.bins
         analysisWindow = .allocate(capacity: size)
         synthesisWindow = .allocate(capacity: size)
         for index in 0..<size {
@@ -319,36 +464,17 @@ private final class Worker {
         oddSamples = .allocate(capacity: bins)
         real = .allocate(capacity: bins)
         imaginary = .allocate(capacity: bins)
-        let channels = 2 * Splitter.sources.count
+        slices = .allocate(capacity: 4 * 2 * bins)
+        powers = .allocate(capacity: 3 * bins)
+        let channels = 2 * Splitter.partCount
         region = .allocate(capacity: channels * Self.regionLength)
         tail = .allocate(capacity: channels * Splitter.fade)
-        scratch = .allocate(capacity: Self.regionLength)
-        spectrum = .allocate(capacity: 4 * bins * frames)
-        wave = .allocate(capacity: 2 * window)
-        spectra = .allocate(capacity: 16 * bins * frames)
-        waves = .allocate(capacity: 8 * window)
-        for buffer in [music, region, tail, spectrum, wave, spectra, waves] {
+        scratch = .allocate(capacity: max(Self.regionLength, size))
+        for buffer in [music, region, tail] {
             buffer.initialize(repeating: 0)
         }
-
-        func array(_ buffer: UnsafeMutableBufferPointer<Float>, _ shape: [Int]) throws -> MLMultiArray {
-            let strides = shape.indices.map { shape[($0 + 1)...].reduce(1, *) }
-            return try MLMultiArray(
-                dataPointer: buffer.baseAddress!,
-                shape: shape.map { $0 as NSNumber },
-                dataType: .float32,
-                strides: strides.map { $0 as NSNumber }
-            )
-        }
         do {
-            inputs = try MLDictionaryFeatureProvider(dictionary: [
-                "spectrum": array(spectrum, [1, 4, bins, frames]),
-                "wave": array(wave, [1, 2, window]),
-            ])
-            options.outputBackings = [
-                "spectra": try array(spectra, [1, 16, bins, frames]),
-                "waves": try array(waves, [1, 8, window]),
-            ]
+            separating = try Run(network: .separating)
         } catch {
             NSLog("Liland: could not set up the HTDemucs buffers: \(error)")
             return nil
@@ -359,18 +485,15 @@ private final class Worker {
         if let forward { vDSP_DFT_DestroySetup(forward) }
         if let inverse { vDSP_DFT_DestroySetup(inverse) }
         [analysisWindow, synthesisWindow, crossfade, music, frame, evenSamples, oddSamples, real, imaginary,
-         region, tail, scratch, spectrum, wave, spectra, waves]
+         slices, powers, region, tail, scratch]
             .forEach { $0.deallocate() }
     }
 
     func run() {
-        // Loaded before the first part is chosen, so it's ready then.
-        let network = Splitter.network
-        if let network {
-            // The first run into these buffers is slower too: also done before the music.
-            Splitter.predicting.withLock {
-                _ = try? network.prediction(from: inputs, options: options)
-            }
+        // HTDemucs is loaded before the first part is chosen, so it's ready then. HTDemucs 6s
+        // waits until the guitar is chosen.
+        if let model = Network.separating.loadedModel() {
+            warmUp(separating, with: model)
         } else {
             exchange.state.withLock { $0.hasFailed = true }
         }
@@ -382,7 +505,7 @@ private final class Worker {
             exchange.wakeUp.wait()
             let state = exchange.state.withLock { $0 }
             if state.isStopping { return }
-            guard let network else { continue }
+            guard !state.hasFailed else { continue }
 
             if state.restart != lastRestart {
                 lastRestart = state.restart
@@ -398,7 +521,7 @@ private final class Worker {
                 if heard - nextEnd > Self.lateness {
                     skip()
                 } else {
-                    separate(endingAt: nextEnd, with: network)
+                    separate(endingAt: nextEnd, keeping: Parts(rawValue: state.parts))
                 }
                 nextEnd += Splitter.hop
                 let produced = produced
@@ -407,12 +530,22 @@ private final class Worker {
         }
     }
 
+    /// Runs the network into this worker's buffers once, before the music, which takes longer the first time.
+    private func warmUp(_ run: Run, with model: MLModel) {
+        Network.predicting.withLock {
+            _ = try? model.prediction(from: run.inputs, options: run.options)
+        }
+        run.model = model
+    }
+
     /// Starts a new stretch of music at `position`: what came before is forgotten, and its parts
     /// come out at the same position, so they line up with the music.
     private func start(at position: Int) {
         consumed = position
         produced = position
         heard = 0
+        separating.transformedEnd = nil
+        guitar?.transformedEnd = nil
         // The first window ends where the first stretch kept starts at the music's first sample.
         nextEnd = Splitter.ahead + Splitter.hop + Splitter.fade
         tail.update(repeating: 0)
@@ -424,7 +557,7 @@ private final class Worker {
         }
     }
 
-    /// Moves the music written since last time into `music`, at the network's rate.
+    /// Moves the music written since last time into `music`, at the networks' rate.
     private func take(upTo written: Int) {
         let capacity = Exchange.capacity, wrap = capacity - 1
         while consumed < written {
@@ -461,80 +594,197 @@ private final class Worker {
         heard += count
     }
 
-    /// Runs the network on the window ending at `end` and writes out the next `hop` of each part.
-    private func separate(endingAt end: Int, with network: MLModel) {
+    /// Runs the networks the parts kept need on the windows ending at `end`, and writes out the
+    /// next `hop` of each part: silent for the guitar until HTDemucs 6s runs too.
+    private func separate(endingAt end: Int, keeping parts: Parts) {
         let started = CFAbsoluteTimeGetCurrent()
-        let window = Splitter.window, frames = Splitter.frames, bins = Splitter.bins
-        let plane = bins * frames
-        // Before the music started, silence.
-        for channel in 0..<2 {
-            for index in 0..<window {
-                let position = end - window + index
-                wave[channel * window + index] = position < 0
-                    ? 0 : music[channel * Self.musicCapacity + (position & (Self.musicCapacity - 1))]
+        region.update(repeating: 0)
+
+        // HTDemucs 6s, once loaded: its first run into new buffers is slower, so it's heard from
+        // the next window on.
+        var guitar: Run?
+        if parts.contains(.guitar) {
+            if let run = self.guitar {
+                guitar = run
+            } else if let model = Network.guitar.modelIfLoaded(), let run = try? Run(network: .guitar) {
+                warmUp(run, with: model)
+                self.guitar = run
             }
         }
 
-        transform()
-        let (spectrumDeviation, spectrumMean) = Self.normalize(spectrum)
-        let (waveDeviation, waveMean) = Self.normalize(wave)
-        do {
-            Splitter.predicting.lock()
-            defer { Splitter.predicting.unlock() }
-            _ = try network.prediction(from: inputs, options: options)
-        } catch {
-            NSLog("Liland: HTDemucs failed: \(error)")
-            spectra.update(repeating: 0)
-            waves.update(repeating: 0)
+        listen(separating, endingAt: end)
+        var loudest: Float = 0
+        vDSP_maxmgv(separating.wave.baseAddress!, 1, &loudest, vDSP_Length(separating.wave.count))
+        guard !parts.isEmpty, loudest >= Self.silence else {
+            separating.transformedEnd = nil
+            self.guitar?.transformedEnd = nil
+            write()
+            return
         }
 
-        let length = Self.regionLength
-        var scale = spectrumDeviation, shift = spectrumMean
-        var waveScale = waveDeviation, waveShift = waveMean
-        for (part, source) in Splitter.sources.enumerated() {
-            for channel in 0..<2 {
-                let output = region.baseAddress! + (2 * part + channel) * length
-                output.update(repeating: 0, count: length)
-                // The spectrogram's half, back into sound frame by frame.
-                for time in Self.firstFrame...Self.lastFrame {
-                    let realPlane = spectra.baseAddress! + (4 * source + 2 * channel) * plane + time
-                    vDSP_vsmsa(realPlane, vDSP_Stride(frames), &scale, &shift, real.baseAddress!, 1, vDSP_Length(bins))
-                    vDSP_vsmsa(realPlane + plane, vDSP_Stride(frames), &scale, &shift, imaginary.baseAddress!, 1, vDSP_Length(bins))
-                    // That slot holds the top frequency, which the network doesn't make.
-                    imaginary[0] = 0
-                    inverseTransform()
-                    let offset = time * Splitter.fftHop - Self.frameOffset - Self.regionStart
-                    let from = max(0, -offset), to = min(Splitter.fftSize, length - offset)
-                    guard from < to else { continue }
-                    let count = vDSP_Length(to - from)
-                    vDSP_vmul(frame.baseAddress! + from, 1, synthesisWindow.baseAddress! + from, 1, frame.baseAddress! + from, 1, count)
-                    vDSP_vadd(frame.baseAddress! + from, 1, output + offset + from, 1, output + offset + from, 1, count)
-                }
-                // Plus the half the network made as a wave.
-                let wavePlane = waves.baseAddress! + (2 * source + channel) * window + Self.regionStart
-                vDSP_vsmsa(wavePlane, 1, &waveScale, &waveShift, scratch.baseAddress!, 1, vDSP_Length(length))
-                vDSP_vadd(scratch.baseAddress!, 1, output, 1, output, 1, vDSP_Length(length))
+        guard predict(separating, endingAt: end) else {
+            write()
+            return
+        }
+        for (part, source) in Self.separatedSources.enumerated() {
+            render(separating, source: source, into: part)
+        }
+        if let guitar {
+            listen(guitar, endingAt: end)
+            if predict(guitar, endingAt: end) {
+                renderGuitar(from: guitar)
             }
         }
         write()
 
         let elapsed = CFAbsoluteTimeGetCurrent() - started
-        if runs < Self.timedRuns {
-            runs += 1
+        if timedRunCount < Self.timedRuns {
+            timedRunCount += 1
             runTime += elapsed
             longestRun = max(longestRun, elapsed)
-            if runs == Self.timedRuns {
+            if timedRunCount == Self.timedRuns {
                 NSLog(
                     "Liland: separating takes %.0f ms on average (at most %.0f) for every %.0f ms of music",
-                    runTime / Double(runs) * 1000, longestRun * 1000, Double(Splitter.hop) / Splitter.rate * 1000
+                    runTime / Double(timedRunCount) * 1000, longestRun * 1000, Double(Splitter.hop) / Splitter.rate * 1000
                 )
             }
         }
     }
 
+    /// Copies the window of music ending at `end` into the run's `wave`: silence before the music started.
+    private func listen(_ run: Run, endingAt end: Int) {
+        for channel in 0..<2 {
+            for index in 0..<run.window {
+                let position = end - run.window + index
+                run.wave[channel * run.window + index] = position < 0
+                    ? 0 : music[channel * Self.musicCapacity + (position & (Self.musicCapacity - 1))]
+            }
+        }
+    }
+
+    /// Runs the network on the window in its `wave`, normalized as HTDemucs does; false if it failed.
+    private func predict(_ run: Run, endingAt end: Int) -> Bool {
+        transform(run, endingAt: end)
+        run.spectrum.baseAddress!.update(from: run.rawSpectrum.baseAddress!, count: run.spectrum.count)
+        (run.spectrumScale, run.spectrumShift) = Self.normalize(run.spectrum)
+        (run.waveScale, run.waveShift) = Self.normalize(run.wave)
+        do {
+            Network.predicting.lock()
+            defer { Network.predicting.unlock() }
+            _ = try run.model?.prediction(from: run.inputs, options: run.options)
+            return true
+        } catch {
+            NSLog("Liland: %@ failed: \(error)", run.network.name)
+            return false
+        }
+    }
+
+    /// One of the network's sources, back into sound, into the stretch of `part` being kept.
+    private func render(_ run: Run, source: Int, into part: Int) {
+        let length = Self.regionLength, bins = Splitter.bins, plane = bins * run.frames
+        var scale = run.spectrumScale, shift = run.spectrumShift
+        var waveScale = run.waveScale, waveShift = run.waveShift
+        for channel in 0..<2 {
+            let output = region.baseAddress! + (2 * part + channel) * length
+            // The spectrogram's half, back into sound frame by frame.
+            for time in run.firstFrame...run.lastFrame {
+                let realPlane = run.spectra.baseAddress! + (4 * source + 2 * channel) * plane + time
+                vDSP_vsmsa(realPlane, vDSP_Stride(run.frames), &scale, &shift, real.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vsmsa(realPlane + plane, vDSP_Stride(run.frames), &scale, &shift, imaginary.baseAddress!, 1, vDSP_Length(bins))
+                // That slot holds the top frequency, which the network doesn't make.
+                imaginary[0] = 0
+                overlap(at: time * Splitter.fftHop - Self.frameOffset - run.regionStart, into: output)
+            }
+            // Plus the half the network made as a wave.
+            let wavePlane = run.waves.baseAddress! + (2 * source + channel) * run.window + run.regionStart
+            vDSP_vsmsa(wavePlane, 1, &waveScale, &waveShift, scratch.baseAddress!, 1, vDSP_Length(length))
+            vDSP_vadd(scratch.baseAddress!, 1, output, 1, output, 1, vDSP_Length(length))
+        }
+    }
+
+    /// The guitar: in each frame, HTDemucs's rest of the music, kept in proportion to how much of
+    /// each frequency HTDemucs 6s hears as guitar rather than piano or anything else.
+    private func renderGuitar(from guitar: Run) {
+        let bins = Splitter.bins, length = Self.regionLength
+        // The same moment is this many frames further into the guitar network's longer window.
+        let offset = guitar.frames - separating.frames
+        let sources = Self.guitarSources
+        for channel in 0..<2 {
+            let output = region.baseAddress! + (2 * Self.guitarPart + channel) * length
+            for time in separating.firstFrame...separating.lastFrame {
+                slice(separating, source: Self.restSource, channel: channel, frame: time, into: 0)
+                slice(guitar, source: sources.guitar, channel: channel, frame: time + offset, into: 1)
+                slice(guitar, source: sources.piano, channel: channel, frame: time + offset, into: 2)
+                slice(guitar, source: sources.rest, channel: channel, frame: time + offset, into: 3)
+                for index in 0..<3 {
+                    var spectrum = DSPSplitComplex(
+                        realp: slices.baseAddress! + 2 * (index + 1) * bins,
+                        imagp: slices.baseAddress! + (2 * (index + 1) + 1) * bins
+                    )
+                    vDSP_zvmags(&spectrum, 1, powers.baseAddress! + index * bins, 1, vDSP_Length(bins))
+                }
+                // The guitar's share of the power: rather nothing than a guess where all is silent.
+                var tiny: Float = 1e-20
+                vDSP_vadd(powers.baseAddress! + bins, 1, powers.baseAddress! + 2 * bins, 1, scratch.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vadd(scratch.baseAddress!, 1, powers.baseAddress!, 1, scratch.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vsadd(scratch.baseAddress!, 1, &tiny, scratch.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vdiv(scratch.baseAddress!, 1, powers.baseAddress!, 1, scratch.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vmul(slices.baseAddress!, 1, scratch.baseAddress!, 1, real.baseAddress!, 1, vDSP_Length(bins))
+                vDSP_vmul(slices.baseAddress! + bins, 1, scratch.baseAddress!, 1, imaginary.baseAddress!, 1, vDSP_Length(bins))
+                overlap(at: time * Splitter.fftHop - Self.frameOffset - separating.regionStart, into: output)
+            }
+        }
+    }
+
+    /// One frame of one of the network's sources as a spectrum, both halves of it together: its
+    /// spectrogram, plus the wave it made, transformed. Into `slices`, at `index`.
+    private func slice(_ run: Run, source: Int, channel: Int, frame time: Int, into index: Int) {
+        guard let forward else { return }
+        let bins = Splitter.bins, plane = bins * run.frames
+        let sliceReal = slices.baseAddress! + 2 * index * bins, sliceImaginary = sliceReal + bins
+        var scale = run.spectrumScale, shift = run.spectrumShift
+        let realPlane = run.spectra.baseAddress! + (4 * source + 2 * channel) * plane + time
+        vDSP_vsmsa(realPlane, vDSP_Stride(run.frames), &scale, &shift, sliceReal, 1, vDSP_Length(bins))
+        vDSP_vsmsa(realPlane + plane, vDSP_Stride(run.frames), &scale, &shift, sliceImaginary, 1, vDSP_Length(bins))
+
+        // The frame lies inside the window, so no mirroring past its edges.
+        var waveScale = run.waveScale, waveShift = run.waveShift
+        let samples = run.waves.baseAddress! + (2 * source + channel) * run.window + time * Splitter.fftHop - Self.frameOffset
+        vDSP_vsmsa(samples, 1, &waveScale, &waveShift, frame.baseAddress!, 1, vDSP_Length(Splitter.fftSize))
+        vDSP_vmul(frame.baseAddress!, 1, analysisWindow.baseAddress!, 1, frame.baseAddress!, 1, vDSP_Length(Splitter.fftSize))
+        frame.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: bins) { pairs in
+            var split = DSPSplitComplex(realp: evenSamples.baseAddress!, imagp: oddSamples.baseAddress!)
+            vDSP_ctoz(pairs, 2, &split, 1, vDSP_Length(bins))
+        }
+        vDSP_DFT_Execute(forward, evenSamples.baseAddress!, oddSamples.baseAddress!, real.baseAddress!, imaginary.baseAddress!)
+        var toSpectrogram = 1 / (2 * Float(Splitter.fftSize).squareRoot())
+        vDSP_vsma(real.baseAddress!, 1, &toSpectrogram, sliceReal, 1, sliceReal, 1, vDSP_Length(bins))
+        vDSP_vsma(imaginary.baseAddress!, 1, &toSpectrogram, sliceImaginary, 1, sliceImaginary, 1, vDSP_Length(bins))
+        // That slot holds the top frequency, which HTDemucs drops.
+        sliceImaginary[0] = 0
+    }
+
+    /// Turns the frame in `real` and `imaginary` back into sound and adds what of it falls inside
+    /// the stretch kept, starting `offset` samples into it.
+    private func overlap(at offset: Int, into output: UnsafeMutablePointer<Float>) {
+        guard let inverse else { return }
+        vDSP_DFT_Execute(inverse, real.baseAddress!, imaginary.baseAddress!, evenSamples.baseAddress!, oddSamples.baseAddress!)
+        frame.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: Splitter.bins) { pairs in
+            var split = DSPSplitComplex(realp: evenSamples.baseAddress!, imagp: oddSamples.baseAddress!)
+            vDSP_ztoc(&split, 1, pairs, 2, vDSP_Length(Splitter.bins))
+        }
+        let from = max(0, -offset), to = min(Splitter.fftSize, Self.regionLength - offset)
+        guard from < to else { return }
+        let count = vDSP_Length(to - from)
+        vDSP_vmul(frame.baseAddress! + from, 1, synthesisWindow.baseAddress! + from, 1, frame.baseAddress! + from, 1, count)
+        vDSP_vadd(frame.baseAddress! + from, 1, output + offset + from, 1, output + offset + from, 1, count)
+    }
+
     /// Silence instead of a window that came too late, so the stretch before fades out.
     private func skip() {
         region.update(repeating: 0)
+        separating.transformedEnd = nil
+        guitar?.transformedEnd = nil
         write()
         skipped += 1
         let now = CFAbsoluteTimeGetCurrent()
@@ -551,7 +801,7 @@ private final class Worker {
     /// `hop` to `exchange.output`, at the device's rate.
     private func write() {
         let capacity = Exchange.capacity, wrap = capacity - 1, length = Self.regionLength
-        for channel in 0..<(2 * Splitter.sources.count) {
+        for channel in 0..<(2 * Splitter.partCount) {
             let output = region.baseAddress! + channel * length
             vDSP_vmul(output, 1, crossfade.baseAddress!, 1, output, 1, vDSP_Length(length))
             let previous = tail.baseAddress! + channel * Splitter.fade
@@ -573,7 +823,7 @@ private final class Worker {
                 count = min(count, converter.convert(frames: Splitter.hop))
             }
         }
-        for part in 0..<Splitter.sources.count {
+        for part in 0..<Splitter.partCount {
             for channel in 0..<2 {
                 let source = fromNetwork.isEmpty
                     ? UnsafePointer(region.baseAddress! + (2 * part + channel) * length)
@@ -587,16 +837,28 @@ private final class Worker {
         produced += count
     }
 
-    /// HTDemucs's spectrogram of `wave`: each channel's real and imaginary parts as planes of
-    /// `bins` by `frames`, scaled by 1/√fftSize.
-    private func transform() {
+    /// HTDemucs's spectrogram of the run's `wave` into its `rawSpectrum`: each channel's real and
+    /// imaginary parts as planes of `bins` by `frames`, scaled by 1/√fftSize.
+    private func transform(_ run: Run, endingAt end: Int) {
         guard let forward else { return }
-        let window = Splitter.window, size = Splitter.fftSize, bins = Splitter.bins, frames = Splitter.frames
+        let window = run.window, frames = run.frames, size = Splitter.fftSize, bins = Splitter.bins
         let plane = bins * frames
         var scale = 1 / (2 * Float(size).squareRoot())
+        // After a hop the window has moved `frameShift` frames: the ones wholly inside it both
+        // times are the same, so only the edges and the newest frames are worked out again.
+        let lastInnerFrame = (window - size + Self.frameOffset) / Splitter.fftHop
+        let reused = run.transformedEnd == end - Splitter.hop
+            ? Self.firstInnerFrame..<(lastInnerFrame - Self.frameShift + 1) : 0..<0
+        if !reused.isEmpty {
+            for row in 0..<(4 * bins) {
+                let first = run.rawSpectrum.baseAddress! + row * frames + reused.lowerBound
+                first.update(from: first + Self.frameShift, count: reused.count)
+            }
+        }
+        run.transformedEnd = end
         for channel in 0..<2 {
-            let samples = wave.baseAddress! + channel * window
-            for time in 0..<frames {
+            let samples = run.wave.baseAddress! + channel * window
+            for time in 0..<frames where !reused.contains(time) {
                 let start = time * Splitter.fftHop - Self.frameOffset
                 for index in 0..<size {
                     var position = start + index
@@ -614,20 +876,10 @@ private final class Worker {
                 vDSP_DFT_Execute(forward, evenSamples.baseAddress!, oddSamples.baseAddress!, real.baseAddress!, imaginary.baseAddress!)
                 // That slot holds the top frequency, which HTDemucs drops.
                 imaginary[0] = 0
-                let realPlane = spectrum.baseAddress! + 2 * channel * plane + time
+                let realPlane = run.rawSpectrum.baseAddress! + 2 * channel * plane + time
                 vDSP_vsmul(real.baseAddress!, 1, &scale, realPlane, vDSP_Stride(frames), vDSP_Length(bins))
                 vDSP_vsmul(imaginary.baseAddress!, 1, &scale, realPlane + plane, vDSP_Stride(frames), vDSP_Length(bins))
             }
-        }
-    }
-
-    /// One frame of `real` and `imaginary` back into `frame`.
-    private func inverseTransform() {
-        guard let inverse else { return }
-        vDSP_DFT_Execute(inverse, real.baseAddress!, imaginary.baseAddress!, evenSamples.baseAddress!, oddSamples.baseAddress!)
-        frame.baseAddress!.withMemoryRebound(to: DSPComplex.self, capacity: Splitter.bins) { pairs in
-            var split = DSPSplitComplex(realp: evenSamples.baseAddress!, imagp: oddSamples.baseAddress!)
-            vDSP_ztoc(&split, 1, pairs, 2, vDSP_Length(Splitter.bins))
         }
     }
 

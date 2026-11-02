@@ -45,6 +45,7 @@
 		B5FCD9850C609D046899839E /* AudioProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74960EE844168AEAC98C622C /* AudioProcessor.swift */; };
 		BCE369476FFAEE78AA348C65 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 51642E39018CE68416E232D7 /* AppDelegate.swift */; };
 		C8BEBF95EA5D85AC46EE1A47 /* AudioAdjustments.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFF411187F55AC20ADDFEF2A /* AudioAdjustments.swift */; };
+		D3CFD76AC1001A630DB4C108 /* HTDemucs6s.mlpackage in Sources */ = {isa = PBXBuildFile; fileRef = 8B39349EFCD0BA055393F697 /* HTDemucs6s.mlpackage */; };
 		D6D6BFB47E8229C4A8B4E00A /* LiveLevels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F8CABE0F211DB534B2132BE /* LiveLevels.swift */; };
 		D6EC4990F1EFB997A1B0FD1E /* PlaybackProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B129AA8581E1B12167E00877 /* PlaybackProgressView.swift */; };
 		DAD0346B81366456C2180D0F /* NotchViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE3066ADF51C235F01B0C8C3 /* NotchViewModel.swift */; };
@@ -134,6 +135,7 @@
 		81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ArtworkColor.swift; sourceTree = "<group>"; };
 		841F58C64C56D994B9C0B7E8 /* uk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = uk; path = uk.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		8780260BAEB824A7A8136E78 /* tr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = tr; path = tr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		8B39349EFCD0BA055393F697 /* HTDemucs6s.mlpackage */ = {isa = PBXFileReference; path = HTDemucs6s.mlpackage; sourceTree = "<group>"; };
 		933D4CC8C9F99BE37DECCCB8 /* EqualizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EqualizerView.swift; sourceTree = "<group>"; };
 		9BD117C6662A9713A9AE94E7 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		9EB1E93B5D71C525AF702A47 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -207,6 +209,7 @@
 				B25549D533DC4300E7A5B76D /* Assets.xcassets */,
 				779540805782E72C71D0B86D /* HTDemucs-LICENSE.txt */,
 				E9B99C1F382E082A68FFFFB7 /* HTDemucs.mlpackage */,
+				8B39349EFCD0BA055393F697 /* HTDemucs6s.mlpackage */,
 				47D8D171B8E3B993504BA1A4 /* Info.plist */,
 				CF067F542CB812044A1AB1CE /* Liland.entitlements */,
 				41D54B7BDD61A8F2E2532302 /* InfoPlist.strings */,
@@ -477,6 +480,7 @@
 				50509B0F293028771F6C953E /* EqualizerView.swift in Sources */,
 				21EF4F23239237EECB2F730B /* ExpandedPlayerView.swift in Sources */,
 				363AC5082E0DF12B2B47A335 /* HTDemucs.mlpackage in Sources */,
+				D3CFD76AC1001A630DB4C108 /* HTDemucs6s.mlpackage in Sources */,
 				1B848A4742C874109745E7ED /* LilandApp.swift in Sources */,
 				D6D6BFB47E8229C4A8B4E00A /* LiveLevels.swift in Sources */,
 				F1F5EBD256AB9C4996C3A896 /* MediaRemoteBridge.swift in Sources */,

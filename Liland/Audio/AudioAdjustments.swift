@@ -2,9 +2,10 @@ import Foundation
 
 /// How the user wants the music to sound in Advanced mode.
 struct AudioAdjustments: Equatable, Codable {
-    /// A part of the music that can be kept on its own. Without stems this is an estimate, not a clean separation.
+    /// A part of the music that can be kept on its own, in the order the buttons show them.
+    /// Without stems this is an estimate, not a clean separation.
     enum Part: String, CaseIterable, Codable {
-        case vocals, bass, drums
+        case vocals, guitar, bass, drums
     }
 
     /// The equalizer's bands, from bass to treble. The first and last are shelves.

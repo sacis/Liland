@@ -1,5 +1,5 @@
-The HTDemucs model (HTDemucs.mlpackage) is converted from Meta's Demucs
-(https://github.com/facebookresearch/demucs) and ships under its license:
+The HTDemucs models (HTDemucs.mlpackage and HTDemucs6s.mlpackage) are converted from Meta's Demucs
+(https://github.com/facebookresearch/demucs) and ship under its license:
 
 MIT License
 

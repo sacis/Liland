@@ -41,7 +41,7 @@ struct SoundControlsView: View {
             pill("Full Mix", isSelected: isolated.isEmpty) {
                 audio.adjustments.isolated = []
             }
-            ForEach(AudioAdjustments.Part.allCases, id: \.self) { part in
+            ForEach(audio.isolatableParts, id: \.self) { part in
                 pill(Self.title(of: part), isSelected: isolated.contains(part)) {
                     audio.adjustments.toggle(part)
                 }
@@ -81,6 +81,7 @@ struct SoundControlsView: View {
     private static func title(of part: AudioAdjustments.Part) -> LocalizedStringKey {
         switch part {
         case .vocals: "Vocals"
+        case .guitar: "Guitar"
         case .bass: "Bass"
         case .drums: "Drums"
         }

@@ -41,6 +41,11 @@ final class AudioLevelMonitor {
         if #available(macOS 14.4, *) { true } else { false }
     }
 
+    /// The parts Advanced mode can keep: the guitar only where its network runs.
+    var isolatableParts: [AudioAdjustments.Part] {
+        AudioAdjustments.Part.allCases.filter { $0 != .guitar || DemucsSplitter.canIsolateGuitar }
+    }
+
     @ObservationIgnored private var bundleID: String?
     @ObservationIgnored private var isPlaying = false
     @ObservationIgnored private var tap: AnyObject?

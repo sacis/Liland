@@ -1,37 +1,73 @@
-"""Converts HTDemucs (Meta's music source separation network) to the Core ML model Liland ships.
+"""Converts HTDemucs (Meta's music source separation network) to the Core ML models Liland ships.
 
-Only the network goes into the model. The spectrogram it reads, the inverse that turns its
+Two of them: HTDemucs, for the vocals, the bass and the drums, and its six-source sibling
+HTDemucs 6s, only to tell the guitar apart, since its other parts come out a little worse.
+
+Only the network goes into each model. The spectrogram it reads, the inverse that turns its
 output back into sound, and the normalization around both are done by `DemucsSplitter.swift`,
-in single precision, since the network itself runs in half precision on the Neural Engine.
+in single precision, since the network itself runs in half precision.
 
-The shapes are fixed: 44 spectrogram frames, about one second of music at 44.1 kHz.
+The shapes are fixed: HTDemucs hears 44 spectrogram frames, about one second of music at
+44.1 kHz, and HTDemucs 6s twice that, which it needs to make out the guitar.
 
-Liland runs it on the GPU. On the Neural Engine some of its half-precision sums overflow and the
-parts come out wrong (about 8 dB from the original instead of 49 dB on the GPU), and it isn't
-faster there anyway (18 ms against 15 ms for one second of music on an M5).
+Liland runs them on the GPU. On the Neural Engine their normalizations blow up its rounding
+errors in the frequencies that are nearly silent, and the parts come out wrong (about 8 dB from
+the original instead of 49 dB on the GPU); it isn't faster there anyway.
 
     python3.11 -m venv venv
     venv/bin/pip install torch demucs coremltools
-    venv/bin/python tools/convert_htdemucs.py
+    venv/bin/python tools/convert_htdemucs.py [htdemucs] [htdemucs_6s]
 
-It writes Liland/Resources/HTDemucs.mlpackage and prints how closely the Core ML model
-follows the original.
+It writes Liland/Resources/HTDemucs.mlpackage and HTDemucs6s.mlpackage (or just the ones named),
+and prints how closely each Core ML model follows the original.
 """
 
 import os
+import sys
 
 import coremltools as ct
 import numpy as np
 import torch
+import torch.nn.functional as F
 from demucs.pretrained import get_model
 from demucs.transformer import create_2d_sin_embedding
 from einops import rearrange
 
-FRAMES = 44
 HOP = 1024
-SAMPLES = FRAMES * HOP
 BINS = 2048
-OUTPUT = os.path.join(os.path.dirname(__file__), "..", "Liland", "Resources", "HTDemucs.mlpackage")
+RESOURCES = os.path.join(os.path.dirname(__file__), "..", "Liland", "Resources")
+# The pretrained Demucs models, the packages made from them, and how many spectrogram frames each hears.
+MODELS = {"htdemucs": ("HTDemucs", 44), "htdemucs_6s": ("HTDemucs6s", 88)}
+
+
+class LayerGroupNorm(torch.nn.Module):
+    """A GroupNorm worked out as a layer_norm over each group, then its per-channel scale and
+    shift: the same numbers, in one Core ML op instead of a dozen, which runs faster on the GPU."""
+
+    def __init__(self, norm):
+        super().__init__()
+        self.norm = norm
+        # Demucs's own GroupNorm normalizes (batch, time, channels) over time and channels.
+        self.channels_last = type(norm).__name__ == "MyGroupNorm"
+
+    def forward(self, x):
+        norm = self.norm
+        if self.channels_last:
+            assert norm.num_groups == 1
+            return F.layer_norm(x, x.shape[1:], eps=norm.eps) * norm.weight + norm.bias
+        shape = x.shape
+        groups = x.reshape(shape[0], norm.num_groups, -1)
+        x = F.layer_norm(groups, groups.shape[2:], eps=norm.eps).reshape(shape)
+        affine = (1, shape[1]) + (1,) * (len(shape) - 2)
+        return x * norm.weight.reshape(affine) + norm.bias.reshape(affine)
+
+
+def replace_group_norms(module):
+    for name, child in module.named_children():
+        if isinstance(child, torch.nn.GroupNorm):
+            setattr(module, name, LayerGroupNorm(child))
+        else:
+            replace_group_norms(child)
 
 
 class Network(torch.nn.Module):
@@ -130,20 +166,22 @@ def snr(reference, estimate):
     return 10 * np.log10(np.sum(reference**2) / max(np.sum((reference - estimate) ** 2), 1e-20))
 
 
-def main():
-    # The attention's fast path is a single fused op Core ML doesn't know.
-    torch.backends.mha.set_fastpath_enabled(False)
-    model = get_model("htdemucs").models[0].eval()
+def convert(name, package, frames):
+    model = get_model(name).models[0].eval()
     model.use_train_segment = False
-    print("sources:", model.sources)
+    sources = len(model.sources)
+    samples = frames * HOP
+    print(name, "sources:", model.sources)
 
     torch.manual_seed(0)
-    spectrum = torch.randn(1, 4, BINS, FRAMES)
-    wave = torch.randn(1, 2, SAMPLES)
+    spectrum = torch.randn(1, 4, BINS, frames)
+    wave = torch.randn(1, 2, samples)
+    with torch.no_grad():
+        expected = [t.numpy() for t in Network(model, spectrum, wave).eval()(spectrum, wave)]
+    replace_group_norms(model)
     network = Network(model, spectrum, wave).eval()
     with torch.no_grad():
         program = torch.export.export(network, (spectrum, wave)).run_decompositions({})
-        expected = [t.numpy() for t in network(spectrum, wave)]
 
     mlmodel = ct.convert(
         program,
@@ -159,20 +197,31 @@ def main():
     mlmodel.author = "Meta Platforms (Défossez, Rouard), converted for Liland"
     mlmodel.license = "MIT"
     mlmodel.short_description = (
-        "HTDemucs network: normalized stereo spectrogram (4 x 2048 x 44) and wave (2 x 45056) in, "
-        "normalized spectra (16 x 2048 x 44) and waves (8 x 45056) of drums, bass, other and vocals out."
+        f"{name} network: normalized stereo spectrogram (4 x {BINS} x {frames}) and wave (2 x {samples}) in, "
+        f"normalized spectra ({4 * sources} x {BINS} x {frames}) and waves ({2 * sources} x {samples}) "
+        f"of {', '.join(model.sources)} out."
     )
-    mlmodel.save(OUTPUT)
+    output = os.path.join(RESOURCES, f"{package}.mlpackage")
+    mlmodel.save(output)
     # Left over from the export, and nothing in the package refers to it.
-    debug = os.path.join(OUTPUT, "executorch_debug_handle_mapping.json")
+    debug = os.path.join(output, "executorch_debug_handle_mapping.json")
     if os.path.exists(debug):
         os.remove(debug)
-    print("saved", os.path.abspath(OUTPUT))
+    print("saved", os.path.abspath(output))
 
-    gpu = ct.models.MLModel(OUTPUT, compute_units=ct.ComputeUnit.CPU_AND_GPU)
+    gpu = ct.models.MLModel(output, compute_units=ct.ComputeUnit.CPU_AND_GPU)
     result = gpu.predict({"spectrum": spectrum.numpy(), "wave": wave.numpy()})
-    for name, reference in zip(("spectra", "waves"), expected):
-        print(f"{name}: shape {result[name].shape}, Core ML on the GPU vs PyTorch {snr(reference, result[name]):.1f} dB")
+    for output_name, reference in zip(("spectra", "waves"), expected):
+        print(f"{output_name}: shape {result[output_name].shape}, Core ML on the GPU vs PyTorch "
+              f"{snr(reference, result[output_name]):.1f} dB")
+
+
+def main():
+    # The attention's fast path is a single fused op Core ML doesn't know.
+    torch.backends.mha.set_fastpath_enabled(False)
+    for name in sys.argv[1:] or MODELS:
+        package, frames = MODELS[name]
+        convert(name, package, frames)
 
 
 if __name__ == "__main__":

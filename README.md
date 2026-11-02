@@ -70,20 +70,20 @@ Ficam todas no ícone de cápsula da barra de menus.
 
 **Avançado** coloca controles de som embaixo do player aberto (também macOS 14.4 ou mais novo, com a mesma permissão de áudio):
 
-- **Voz**, **Baixo** e **Bateria** tocam só as partes que você escolher, no volume da música inteira. Dá pra combinar mais de uma. Clicar de novo numa parte tira ela, e tirando todas a música volta inteira.
+- **Voz**, **Guitarra**, **Baixo** e **Bateria** tocam só as partes que você escolher, no volume da música inteira. Dá pra combinar mais de uma. Clicar de novo numa parte tira ela, e tirando todas a música volta inteira. A Guitarra só aparece nos Macs com chip Apple e, como usa uma separação à parte, leva um instante pra entrar quando é escolhida.
 - **Equalizador** de cinco faixas, dos graves (80 Hz) aos agudos (10 kHz), de −12 a +12 dB.
 - **Tom** sobe ou desce a música até 6 semitons sem mudar a velocidade.
 - **↺** volta tudo ao normal. Os ajustes ficam salvos pra próxima vez.
 
-Com o Avançado ligado, quem toca a música é o Liland, já ajustada, no lugar do app. Por isso o som atrasa um pouquinho: cerca de um oitavo de segundo ao isolar partes e mais um décimo ao mudar o tom. Num vídeo, a boca pode ficar levemente fora de sincronia com a voz. Desligando o modo ou fechando o Liland, o som volta direto do app.
+Com o Avançado ligado, quem toca a música é o Liland, já ajustada, no lugar do app. Por isso o som atrasa um pouco: cerca de três décimos de segundo ao isolar partes (um oitavo nos Macs com Intel) e mais um décimo ao mudar o tom. Num vídeo, a boca fica um pouco fora de sincronia com a voz. Desligando o modo ou fechando o Liland, o som volta direto do app.
 
 <details>
-<summary>Como o Liland separa voz, baixo e bateria</summary>
+<summary>Como o Liland separa voz, guitarra, baixo e bateria</summary>
 <br>
 
-É uma estimativa feita na hora, não uma separação perfeita. O Liland reconhece a voz e o baixo por estarem no centro da mixagem, então instrumentos que também estão no centro ainda aparecem um pouco, e um instrumento muito parecido com bateria (um violão bem batido, por exemplo) pode vazar nela.
+Nos Macs com chip Apple, o Liland usa o HTDemucs, uma rede neural da Meta treinada com músicas gravadas parte por parte. Ela roda no próprio Mac, sem mandar nada pra internet. Voz, baixo e bateria vêm de um modelo. A guitarra é o resto da música nesse modelo, filtrado por um segundo modelo que reconhece guitarra e só liga enquanto ela está escolhida: assim ela vem com o corpo inteiro. A rede precisa ouvir um pedaço da música pra separar, e é daí que vem o atraso de três décimos de segundo. É bem mais limpo que uma estimativa, mas não é perfeito: num trecho muito cheio ainda aparece um pouco dos outros instrumentos, e a guitarra pode trazer junto um teclado ou sintetizador de som parecido.
 
-Os agudos do baixo se perdem ao isolar, então, quando a voz não está junto, o Liland recria esses agudos a partir do próprio baixo pra ele não soar abafado. Numa música sem baixo, **Baixo** fica em silêncio em vez de tocar restos de outros instrumentos.
+Nos Macs com Intel, que não rodam a rede rápido o bastante, a separação é uma estimativa feita na hora. O Liland reconhece a voz e o baixo por estarem no centro da mixagem, então instrumentos que também estão no centro ainda aparecem um pouco, e um instrumento muito parecido com bateria (um violão bem batido, por exemplo) pode vazar nela.
 
 </details>
 

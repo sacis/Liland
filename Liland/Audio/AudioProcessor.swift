@@ -90,6 +90,7 @@ final class AudioProcessor {
     func apply(_ adjustments: AudioAdjustments) {
         var parts = StemSplitter.Parts()
         if adjustments.isolated.contains(.vocals) { parts.insert(.vocals) }
+        if adjustments.isolated.contains(.guitar) { parts.insert(.guitar) }
         if adjustments.isolated.contains(.bass) { parts.insert(.bass) }
         if adjustments.isolated.contains(.drums) { parts.insert(.drums) }
 
