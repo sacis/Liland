@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Advanced mode, below the player: the part of the music to isolate, the equalizer bands and the pitch.
 struct SoundControlsView: View {
     let viewModel: NotchViewModel
 
@@ -34,7 +33,7 @@ struct SoundControlsView: View {
 
     // MARK: - Isolation
 
-    /// "Full Mix" plays everything; each part adds to or leaves what's kept, and leaving the last one plays everything again.
+    /// Leaving the last isolated part plays everything again.
     private var isolationRow: some View {
         let isolated = audio.adjustments.isolated
         return HStack(spacing: 6) {
@@ -177,7 +176,6 @@ struct SoundControlsView: View {
     }
 }
 
-/// A vertical equalizer band: 0 dB in the middle, filled toward the value in the album color.
 private struct BandSlider: View {
     let value: Float
     let color: Color

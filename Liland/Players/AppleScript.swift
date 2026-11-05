@@ -1,10 +1,6 @@
 import Foundation
 
-/// Runs AppleScript source synchronously. Call it off the main thread.
-///
-/// NSAppleScript isn't safe to run on several threads at once (it can hand back mangled
-/// results), so scripts run one at a time, each given `timeout` seconds to get an answer
-/// from the app before failing, so an app that hangs can't hold up the others for long.
+/// NSAppleScript isn't thread-safe (mangled results), so scripts run serially. Call off main.
 enum AppleScript {
     private static let lock = NSLock()
 
@@ -12,7 +8,7 @@ enum AppleScript {
         let code: Int
         let message: String
 
-        /// errAEEventNotPermitted: the user denied Automation access in System Settings.
+        /// errAEEventNotPermitted: Automation access denied in System Settings.
         var isPermissionDenied: Bool { code == -1743 }
     }
 

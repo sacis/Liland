@@ -1,16 +1,6 @@
 import Accelerate
 
-/// Splits stereo music into vocals, bass and drums, and keeps the chosen ones.
-///
-/// There is no trained model here: each part is recognized by how it looks in a
-/// spectrogram. A drum hit is short and spread over many frequencies (a vertical line);
-/// vocals and bass hold notes (horizontal lines). Held and hit are told apart by comparing
-/// each frequency with the moments around it (median over time) and with the frequencies
-/// around it (median over frequency). On top of that, vocals are what sits in the center of
-/// the stereo image above about 120 Hz and isn't a drum hit, plus their consonants ("s", "t",
-/// "ch"): hits too, but high and dead center, where cymbals rarely are. Bass is the held sounds in
-/// the center below about 250 Hz, brightened by `BassExciter` when the voice isn't kept too.
-/// Looking a few moments ahead makes all this much cleaner, at the cost of `latency`.
+/// Real-time split by spectrogram shape (held vs. hit, via median filters) and stereo center; no model.
 /// Not thread-safe: feed it from one thread.
 final class StemSplitter {
     struct Parts: OptionSet {
@@ -25,78 +15,50 @@ final class StemSplitter {
     private static let size = 2048
     private static let hop = 512
     private static let bins = size / 2
-    /// Moments looked at after the one being split: about 85 ms at 48 kHz.
-    private static let lookAhead = 8
-    /// Moments for the held part, centered on the one being split.
+    private static let lookAhead = 8 // frames, ~85 ms at 48 kHz
     private static let timeSpan = 2 * lookAhead + 1
-    /// Neighboring frequencies for the hits.
     private static let frequencySpan = 17
-    /// How decisively each bit of sound goes to the held or the hit side: higher leaks less but
-    /// sounds less natural.
     private static let bassSharpness: Float = 4
     private static let hitSharpness: Float = 4
-    /// How strictly vocals and bass must sit in the center: higher drops more of the instruments
-    /// beside them. For vocals it also drops the voice's own reverb and backing vocals sung off
-    /// to the sides, which then come and go and sound robotic, so it's kept loose.
+    /// Higher drops side instruments; kept loose for vocals so reverb and backing vocals don't go robotic.
     private static let vocalCenterFocus: Float = 2
-    /// How strictly a high hit must sit dead center to count as a consonant rather than a drum:
-    /// a singer's "s" is in the middle, cymbals heard by the overhead mics are spread out.
+    /// A singer's "s" is dead center; cymbals heard by the overhead mics are spread out.
     private static let consonantCenterFocus: Float = 32
     private static let bassCenterFocus: Float = 6
-    /// How much of the vocals' mask carries over from the moment before. Smooths the flicker that
-    /// sounds robotic; bass and drums are better off without it.
+    /// Smooths the vocal mask's robotic-sounding flicker; bass and drums are better off without it.
     private static let vocalMemory: Float = 0.7
-    /// A bass note keeps sounding, while a kick's thump is gone within about 100 ms. So the bass
-    /// keeps a frequency only as much as it still sounds `lookAhead` moments later, raised to this.
+    /// A kick's thump is gone within ~100 ms, a bass note lasts: keep what still sounds `lookAhead` later.
     private static let bassSustainFocus: Float = 2
-    /// Moments the bass line is watched to tell whether the song has one: about 0.75 s, long
-    /// enough to span a few kicks and short enough to catch the bass coming back after a break.
+    /// ~0.75 s: spans a few kicks, yet catches the bass coming back after a break.
     private static let presenceSpan = 70
-    /// ...and the fewest it needs before deciding.
     private static let presenceMinimum = 24
-    /// With no bass line, all the bass mask finds is leftovers (the tail of a kick, the low
-    /// notes of other instruments) that sound like noise, so the bass fades out. A bass line
-    /// plays nearly all the time, so its typical level is close to its peaks (continuity), and
-    /// it carries much of the low end (share). Both in decibels: below the range it's out,
-    /// above it's in.
+    /// dB. Without a steady bass line that owns the lows, only leftovers remain, so it fades out.
     private static let continuityRange: (low: Float, high: Float) = (-18, -13)
     private static let shareRange: (low: Float, high: Float) = (-28, -22)
-    /// Seconds for the bass to fade in once found, and out once gone.
-    private static let presenceOpening: Float = 0.15
-    private static let presenceClosing: Float = 1
+    private static let presenceOpening: Float = 0.15 // s
+    private static let presenceClosing: Float = 1 // s
 
-    /// Spectra kept: the look-ahead, the frame being split, and the one before it.
     private static let slots = lookAhead + 2
 
-    /// How far the output lags behind the input: a whole frame, plus the look-ahead.
-    static let latency = size + lookAhead * hop
-    /// Where new input samples are written; the frame is processed once they reach the end.
+    static let latency = size + lookAhead * hop // samples
     private static let fill = size - hop
 
     private let forward = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(size), .FORWARD)
     private let inverse = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(size), .INVERSE)
-    /// Square root of a Hann window, applied before and after, so the overlapping frames add back to the input.
+    /// Square-root Hann, applied before and after, so the overlapping frames add back to the input.
     private let window: UnsafeMutableBufferPointer<Float>
-    /// How much of each frequency can be vocals (none of the bass range) or bass (only the bass range).
     private let vocalRange: UnsafeMutableBufferPointer<Float>
     private let bassRange: UnsafeMutableBufferPointer<Float>
-    /// Where a kick drum lives. Its thump is too narrow to stand out from the frequencies
-    /// around it, so there a hit is whatever jumps above the moments around it.
+    /// A kick's thump is too narrow to stand out across frequencies, so there a hit is a jump over time.
     private let kickRange: UnsafeMutableBufferPointer<Float>
-    /// Where consonants live: sibilants and the bursts of "t" and "k", roughly 2 to 12 kHz.
     private let consonantRange: UnsafeMutableBufferPointer<Float>
 
     private struct Channel {
-        /// The last `size` input samples; new ones are written from `fill` on.
         let input: UnsafeMutableBufferPointer<Float>
-        /// Overlapping frames being summed.
         let accumulator: UnsafeMutableBufferPointer<Float>
-        /// Finished samples, read out while the next hop comes in.
         let output: UnsafeMutableBufferPointer<Float>
-        /// The spectra of the last `slots` frames, waiting for the frames after them.
         let real: UnsafeMutableBufferPointer<Float>
         let imaginary: UnsafeMutableBufferPointer<Float>
-        /// The frame being split, masked.
         let maskedReal: UnsafeMutableBufferPointer<Float>
         let maskedImaginary: UnsafeMutableBufferPointer<Float>
     }
@@ -105,7 +67,7 @@ final class StemSplitter {
     private var position = StemSplitter.fill
     private var frameCount = 0
 
-    /// The bass alone, in mono, for `exciter`: kept apart so the exciter never touches anything else.
+    /// Mono bass kept apart so the exciter never touches anything else.
     private let bassMasks: UnsafeMutableBufferPointer<Float>
     private let bassReal: UnsafeMutableBufferPointer<Float>
     private let bassImaginary: UnsafeMutableBufferPointer<Float>
@@ -116,24 +78,18 @@ final class StemSplitter {
     private var isExciting = false
     private var isKeepingBass = false
 
-    /// How much of the bass to let through, from 0 (the song has no bass line) to 1.
     private var bassPresence: Float = 0
-    /// The bass found in each recent moment, in a circle, to measure its continuity.
     private let presenceHistory: UnsafeMutableBufferPointer<Float>
     private let presenceScratch: UnsafeMutableBufferPointer<Float>
     private var presenceCount = 0
-    /// Averages of the bass found and of the whole low end, to measure its share.
     private var bassEnergy: Float = 0
     private var lowEnergy: Float = 0
 
     private let frame: UnsafeMutableBufferPointer<Float>
     private let evenSamples: UnsafeMutableBufferPointer<Float>
     private let oddSamples: UnsafeMutableBufferPointer<Float>
-    /// The magnitudes of the last `timeSpan` frames, one row each.
     private let history: UnsafeMutableBufferPointer<Float>
     private let sortScratch: UnsafeMutableBufferPointer<Float>
-    /// Per frequency, for the frame being split: how centered it is, the vocals' mask, and the
-    /// mask of everything else kept.
     private let centers: UnsafeMutableBufferPointer<Float>
     private let vocalMasks: UnsafeMutableBufferPointer<Float>
     private let otherMasks: UnsafeMutableBufferPointer<Float>
@@ -201,7 +157,6 @@ final class StemSplitter {
             .forEach { $0.deallocate() }
     }
 
-    /// Forgets the music heard so far, to start over without echoes of it.
     func reset() {
         for channel in channels {
             channel.input.update(repeating: 0)
@@ -218,21 +173,17 @@ final class StemSplitter {
         position = Self.fill
     }
 
-    /// Replaces the samples of both channels, in place, with the parts to keep.
     func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: Parts) {
         let first = channels[0], second = channels[1]
-        // With the voice kept too, the recreated harmonics would land right on it and make it
-        // sound buzzy, and the voice fills that range anyway.
+        // Harmonics would land on a kept voice and sound buzzy, and the voice fills that range anyway.
         let excites = parts.contains(.bass) && !parts.contains(.vocals)
         if excites && !isExciting {
-            // Start clean, without what was left from the last time the bass was brightened.
             exciter = BassExciter(sampleRate: sampleRate)
             bassAccumulator.update(repeating: 0)
             bassOutput.update(repeating: 0)
         }
         isExciting = excites
         if parts.contains(.bass) && !isKeepingBass {
-            // Silent until a bass line is found.
             bassPresence = 0
             presenceCount = 0
             bassEnergy = 0
@@ -273,7 +224,6 @@ final class StemSplitter {
         for bin in 0..<Self.bins {
             history[newestRow + bin] = power(at: newest, bin).squareRoot()
         }
-        // Every part needs it: vocals and bass sit in the center, and drums give up centered consonants.
         if !parts.isEmpty {
             measureCenters(before: before, splitting: splitting, after: after)
         }
@@ -308,8 +258,7 @@ final class StemSplitter {
                     other += bass
                 }
                 if parts.contains(.vocals) {
-                    // Everything centered that isn't clearly a drum hit, so the start of each
-                    // syllable stays with the voice, and the consonants among the hits.
+            // Centered non-hits (keeps syllable onsets with the voice), plus centered consonants.
                     vocals = vocalRange[bin] * pow(centers[bin], Self.vocalCenterFocus) * (1 - isHit) + isHit * consonant
                 }
             }
@@ -343,7 +292,6 @@ final class StemSplitter {
         }
     }
 
-    /// Decides, from the bass found in this moment and the ones before, how much of it to let through.
     private func updateBassPresence(found: Float, low: Float) {
         let moment = Float(Self.hop) / Float(sampleRate)
         let smoothing = 1 - exp(-1 / Float(Self.presenceSpan))
@@ -369,8 +317,6 @@ final class StemSplitter {
         bassPresence += (target - bassPresence) * (1 - exp(-moment / time))
     }
 
-    /// Turns a masked spectrum back into sound and adds it to the overlapping frames in
-    /// `accumulator`; the samples that no later frame overlaps go to `output`.
     private func overlapAdd(
         _ inverse: vDSP_DFT_Setup,
         real: UnsafeMutableBufferPointer<Float>,
@@ -390,7 +336,6 @@ final class StemSplitter {
         (accumulator.baseAddress! + Self.size - Self.hop).update(repeating: 0, count: Self.hop)
     }
 
-    /// Both channels' power at a bin of the spectra stored at `slot`.
     private func power(at slot: Int, _ bin: Int) -> Float {
         let left = channels[0], right = channels[1]
         let index = slot + bin
@@ -400,9 +345,7 @@ final class StemSplitter {
         return real + left.imaginary[index] * left.imaginary[index] + right.imaginary[index] * right.imaginary[index]
     }
 
-    /// For each frequency of the frame being split: 1 when both channels carry the same sound,
-    /// 0 when it's all on one side (or the sides are out of phase). Measured over the
-    /// neighboring frequencies and moments too, since a single one is too jumpy to trust.
+    /// 1 when both channels match, 0 when one-sided or out of phase; averaged over neighbors.
     private func measureCenters(before: Int, splitting: Int, after: Int) {
         let left = channels[0], right = channels[1]
         for bin in 0..<Self.bins {
@@ -425,7 +368,6 @@ final class StemSplitter {
         }
     }
 
-    /// The median of this frequency over the frames around the one being split.
     private func heldMagnitude(at bin: Int) -> Float {
         for row in 0..<Self.timeSpan {
             sortScratch[row] = history[row * Self.bins + bin]
@@ -433,7 +375,6 @@ final class StemSplitter {
         return Self.median(sortScratch, count: Self.timeSpan)
     }
 
-    /// The median of the frequencies around this one, in the frame being split.
     private func hitMagnitude(at bin: Int, row: Int) -> Float {
         let half = Self.frequencySpan / 2
         let low = max(0, bin - half)
@@ -444,7 +385,6 @@ final class StemSplitter {
         return Self.median(sortScratch, count: high - low + 1)
     }
 
-    /// Median of the first `count` values of `values`, which it reorders.
     private static func median(_ values: UnsafeMutableBufferPointer<Float>, count: Int) -> Float {
         for index in 1..<count {
             let value = values[index]
@@ -458,13 +398,11 @@ final class StemSplitter {
         return values[count / 2]
     }
 
-    /// How much of a sound is `part` rather than `other`, from their magnitudes.
     private static func share(of part: Float, against other: Float, sharpness: Float) -> Float {
         let part = pow(part, sharpness), total = part + pow(other, sharpness)
         return total > 0 ? part / total : 0
     }
 
-    /// 0 below `low`, 1 above `high`, and a smooth curve in between.
     private static func fade(_ value: Float, from low: Float, to high: Float) -> Float {
         guard value > low else { return 0 }
         guard value < high else { return 1 }

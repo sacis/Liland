@@ -1,18 +1,12 @@
 import Foundation
 
-/// Describes a music app that Liland reads and controls through AppleScript.
-/// Adding another scriptable player means adding another definition here.
 struct PlayerDefinition {
     let bundleIdentifier: String
-    /// Distributed notification the app posts on every play, pause and track change.
     let notificationName: String
-    /// AppleScript expression (with the current track bound to `t`) for a stable track id.
+    /// AppleScript expression, with the current track bound to `t`.
     let trackIDExpression: String
-    /// AppleScript expression for the cover URL, or nil when the cover is read as image data.
     let artworkURLExpression: String?
-    /// The app's boolean shuffle property.
     let shuffleProperty: String
-    /// The app's repeat property: off/one/all when `canRepeatOne`, else a boolean.
     let repeatProperty: String
     let canRepeatOne: Bool
     let albumLink: AlbumLink
@@ -41,9 +35,7 @@ struct PlayerDefinition {
 
     private var app: String { "application id \"\(bundleIdentifier)\"" }
 
-    /// Returns {state, id, name, artist, album, duration, position, artwork URL, shuffle, repeat}.
     /// Checks `is running` first so that querying never launches the app.
-    /// Shuffle and repeat are "" when the app can't tell, which hides their buttons.
     var statusScript: String {
         """
         if \(app) is not running then return {"notrunning"}
@@ -93,7 +85,6 @@ struct PlayerDefinition {
         }
     }
 
-    /// Reads the repeat property as `statusScript` returns it.
     func repeatMode(from value: String) -> RepeatMode? {
         switch value {
         case "true", "all": .all

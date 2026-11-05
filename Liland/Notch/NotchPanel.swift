@@ -1,8 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// Borderless, transparent panel that floats above the menu bar on every Space,
-/// including full-screen apps, without ever activating Liland.
 final class NotchPanel: NSPanel {
     init() {
         super.init(

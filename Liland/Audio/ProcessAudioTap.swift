@@ -1,12 +1,10 @@
 import AudioToolbox
 import CoreAudio
 
-/// Listens to what some processes are playing. With a `processor`, it also replaces what
-/// the user hears: the processes are muted and the processor plays its version instead.
-/// Exists while it runs: creating it starts the tap, releasing it stops everything.
+/// With a `processor`, the processes are muted and it plays its version instead. Releasing it stops all.
 @available(macOS 14.4, *)
 final class ProcessAudioTap {
-    /// Interleaved samples, the number of channels, and the sample rate. Called on a background queue.
+    /// Interleaved samples. Called on a background queue.
     typealias Handler = (_ samples: UnsafeBufferPointer<Float>, _ channels: Int, _ sampleRate: Double) -> Void
 
     let processes: [AudioObjectID]
@@ -105,19 +103,16 @@ final class ProcessAudioTap {
 
     // MARK: - Finding what to tap
 
-    /// Audio process objects of an app and its helpers (bundle IDs that start with `bundleID`).
     static func processes(of bundleID: String) -> [AudioObjectID] {
         AudioObjectID.system.objects(kAudioHardwarePropertyProcessObjectList).filter { process in
             process.string(kAudioProcessPropertyBundleID)?.hasPrefix(bundleID) == true
         }
     }
 
-    /// The device the user is listening on, which drives the tap's clock.
     static var defaultOutputDeviceUID: String? {
         defaultOutputDevice?.string(kAudioDevicePropertyDeviceUID)
     }
 
-    /// The rate the current output runs at, which the tap's aggregate device takes on.
     static var defaultOutputSampleRate: Double? {
         var sampleRate: Float64 = 0
         guard let device = defaultOutputDevice,
@@ -127,8 +122,7 @@ final class ProcessAudioTap {
         return sampleRate
     }
 
-    /// How long sound takes from the tap to the user's ears on the current output,
-    /// as the device reports it: a few milliseconds on speakers, much more on Bluetooth.
+    /// Tap-to-ear latency as the device reports it: a few ms on speakers, much more on Bluetooth.
     static var defaultOutputLatency: TimeInterval? {
         guard let device = defaultOutputDevice, let sampleRate = defaultOutputSampleRate else { return nil }
         let output = kAudioObjectPropertyScopeOutput

@@ -1,11 +1,6 @@
 import AppKit
 import Observation
 
-/// Live state of one scriptable music app (Spotify, Apple Music).
-///
-/// The app's distributed notification triggers a refresh, and the full state is
-/// read through AppleScript. A slow poll catches changes made from other devices, and
-/// anything a notification or a script missed.
 @Observable
 final class ScriptablePlayer: MusicPlayer, Identifiable {
     let definition: PlayerDefinition
@@ -29,7 +24,7 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
     init(definition: PlayerDefinition) {
         self.definition = definition
         appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: definition.bundleIdentifier)
-        // The Finder name is localized ("Música" in Portuguese, "Musique" in French…).
+        // The Finder name is localized ("Música", "Musique"…).
         displayName = appURL.map { url in
             let name = FileManager.default.displayName(atPath: url.path)
             return name.hasSuffix(".app") ? String(name.dropLast(4)) : name
@@ -61,7 +56,7 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             self.applyNotRunning()
         }
 
-        // Not only while the app seems to be running: if that was misread, the next poll fixes it.
+        // Polls even when the app seems closed: if that was misread, the next poll fixes it.
         pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.refresh()
         }
@@ -103,7 +98,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             case "notrunning":
                 applyNotRunning()
             case nil:
-                // Keep what's shown; the next poll tries again.
                 NSLog("Liland: \(displayName) gave an unexpected answer: \(output)")
             case "stopped":
                 isRunning = true
@@ -147,8 +141,7 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
     }
 
     private func handlePlaybackNotification(_ note: Notification) {
-        // Both apps include "Player State" ("Playing", "Paused", "Stopped"):
-        // update play/pause instantly and let the script fill in the rest.
+        // Both apps send "Player State": update play/pause now and let the script fill in the rest.
         if let state = note.userInfo?["Player State"] as? String, var snapshot {
             snapshot.position = snapshot.elapsed(at: Date())
             snapshot.positionDate = Date()
@@ -218,7 +211,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
         send(definition.shuffleCommand(!isShuffling))
     }
 
-    /// Off → all → one → off, like the apps themselves; Spotify has no "one" here.
     func cycleRepeat() {
         guard var snapshot, let mode = snapshot.repeatMode else { return }
         let next: RepeatMode = switch mode {

@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// The "Live Activity" look: artwork on the left of the camera, equalizer on the right.
 struct CompactView: View {
     let nowPlaying: NowPlayingController
     let notchWidth: CGFloat

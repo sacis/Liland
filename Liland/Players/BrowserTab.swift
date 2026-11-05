@@ -1,14 +1,9 @@
 import Foundation
 
-/// Brings forward the browser tab a song plays in, so opening the player from the island
-/// lands on Deezer or YouTube rather than on whatever tab was in front.
-///
-/// Works through AppleScript in Safari and Chromium browsers; others just come forward.
 enum BrowserTab {
     private enum Dialect {
         case safari, chromium
 
-        /// The tab property that holds the page title.
         var titleProperty: String {
             switch self {
             case .safari: "name"
@@ -39,7 +34,6 @@ enum BrowserTab {
         "com.microsoft.edgemac": .chromium,
     ]
 
-    /// Music services. Media from any other site (WhatsApp, Instagram, YouTube…) isn't music.
     private static let musicHosts = [
         "deezer.com", "open.spotify.com", "music.youtube.com", "soundcloud.com", "tidal.com",
         "music.apple.com", "music.amazon.", "bandcamp.com", "qobuz.com", "audiomack.com",
@@ -52,8 +46,6 @@ enum BrowserTab {
         let host: String
     }
 
-    /// Call it off the main thread. False when the browser can't be scripted, Liland isn't
-    /// allowed to control it, or no tab looks like the song's.
     static func show(_ track: NowPlayingTrack, in bundleIdentifier: String) -> Bool {
         guard let dialect = dialects[bundleIdentifier],
               let tab = bestTab(for: track, among: tabs(in: bundleIdentifier, dialect) ?? [])
@@ -74,10 +66,7 @@ enum BrowserTab {
         dialects[bundleIdentifier] != nil
     }
 
-    /// Whether the song plays on a music service, judged by the tab whose title names it.
-    /// A site can rename its tab a moment late, so without such a tab, media that names an
-    /// artist counts while a music service is open. Call it off the main thread; nil when
-    /// the browser can't be asked.
+    /// Tabs can be retitled late: with no match, media naming an artist counts if a music site is open.
     static func isMusicSite(_ track: NowPlayingTrack, in bundleIdentifier: String) -> Bool? {
         guard let dialect = dialects[bundleIdentifier],
               let tabs = tabs(in: bundleIdentifier, dialect)
@@ -93,8 +82,7 @@ enum BrowserTab {
         musicHosts.contains(where: host.contains)
     }
 
-    /// The song's title in the tab's title counts most (sites put it there, and browsers
-    /// report the page title as Now Playing when a site gives none), then the artist.
+    /// Title match counts most: browsers report the page title as Now Playing when a site gives none.
     private static func bestTab(for track: NowPlayingTrack, among tabs: [Tab]) -> Tab? {
         var best: (tab: Tab, score: Int)?
         for tab in tabs {
@@ -107,8 +95,6 @@ enum BrowserTab {
         return best?.tab
     }
 
-    /// One line per tab: window, tab, title and URL, separated by tabs. nil when the browser
-    /// can't be asked, e.g. Liland isn't allowed to control it.
     private static func tabs(in bundleIdentifier: String, _ dialect: Dialect) -> [Tab]? {
         let script = """
             tell application id "\(bundleIdentifier)"

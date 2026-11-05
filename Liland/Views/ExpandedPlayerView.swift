@@ -94,8 +94,7 @@ struct ExpandedPlayerView: View {
         .frame(height: 30)
     }
 
-    /// Lit in the artwork's color when on. Kept in place but invisible when the player
-    /// doesn't report it (`isOn` nil), so the main controls stay centered.
+    /// Invisible but kept in place when `isOn` is nil, so the main controls stay centered.
     private func modeButton(
         systemName: String,
         isOn: Bool?,

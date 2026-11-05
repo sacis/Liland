@@ -1,8 +1,5 @@
 #!/bin/bash
-# Gera o projeto e compila em Release.
-#   ./scripts/build.sh            → build/Liland.app
-#   ./scripts/build.sh --install  → instala em /Applications e abre (sem deixar cópia em build/)
-#   ./scripts/build.sh --release  → build/Liland.zip, pronto para anexar a uma Release do GitHub
+# → build/Liland.app; --install: instala em /Applications e abre; --release: build/Liland.zip
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -23,7 +20,6 @@ rm -rf build/Liland.app
 
 if [[ "${1:-}" == "--install" ]]; then
   pkill -x Liland 2>/dev/null || true
-  # Espera a versão antiga fechar de vez antes de abrir a nova.
   for _ in {1..50}; do pgrep -x Liland >/dev/null || break; sleep 0.1; done
   rm -rf /Applications/Liland.app
   cp -R "$PRODUCT" /Applications/Liland.app

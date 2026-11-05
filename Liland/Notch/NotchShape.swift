@@ -1,7 +1,6 @@
 import SwiftUI
 
-/// The notch silhouette: top corners flare outward into the screen edge,
-/// bottom corners are rounded inward.
+/// Top corners flare outward into the screen edge; bottom corners round inward.
 struct NotchShape: Shape {
     var topRadius: CGFloat
     var bottomRadius: CGFloat

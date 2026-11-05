@@ -1,7 +1,6 @@
 import AppKit
 
 enum ArtworkColor {
-    /// A vivid color from the album cover that stays readable on black.
     static func accent(for image: NSImage) -> NSColor? {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil),
               let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
@@ -37,7 +36,6 @@ enum ArtworkColor {
         }
         guard !samples.isEmpty else { return nil }
 
-        // Average the most vivid quarter of the cover.
         let vivid = samples.sorted { $0.score > $1.score }.prefix(max(1, samples.count / 4))
         let count = CGFloat(vivid.count)
         let red = vivid.reduce(0) { $0 + $1.color.redComponent } / count
@@ -48,7 +46,6 @@ enum ArtworkColor {
         NSColor(srgbRed: red, green: green, blue: blue, alpha: 1)
             .getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
 
-        // Grayscale covers get a soft white instead of a muddy gray.
         guard saturation > 0.12 else { return NSColor(white: 0.88, alpha: 1) }
         return NSColor(
             hue: hue,

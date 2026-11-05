@@ -2,14 +2,11 @@ import AppKit
 import Observation
 import SwiftUI
 
-/// Combines every supported player into the one the island shows:
-/// the player that most recently started playing, or else the one used last.
 @Observable
 final class NowPlayingController {
     static let defaultAccent = Color(red: 0.12, green: 0.84, blue: 0.38)
 
     let players: [any MusicPlayer]
-    /// Every other app that shows in Control Center (Deezer, browsers…), when macOS allows it.
     let systemPlayer: SystemPlayer
     let audioLevels = AudioLevelMonitor()
 
@@ -17,7 +14,7 @@ final class NowPlayingController {
     private(set) var artwork: NSImage?
     private(set) var accentColor = NowPlayingController.defaultAccent
 
-    /// Called once a new song's artwork has loaded (or failed to).
+    /// Fires once the new song's artwork has loaded (or failed to), not on the track change itself.
     @ObservationIgnored var onTrackChange: (() -> Void)?
 
     private struct Seen: Equatable {
@@ -44,7 +41,6 @@ final class NowPlayingController {
         }
     }
 
-    /// Asks every player again, even one that seemed closed: it may have been misread.
     func refresh() {
         players.filter(\.isInstalled).forEach { $0.refresh() }
     }
@@ -60,12 +56,10 @@ final class NowPlayingController {
         activePlayer?.snapshot?.elapsed(at: date) ?? 0
     }
 
-    /// A running player Liland isn't allowed to read, to explain why nothing shows.
     var deniedPlayer: (any MusicPlayer)? {
         players.first { $0.isRunning && $0.permissionDenied }
     }
 
-    /// The player to offer when nothing is playing: the one used last, else the first installed.
     var preferredPlayer: (any MusicPlayer)? {
         mostRecent(players.filter(\.isInstalled))
     }
@@ -106,7 +100,6 @@ final class NowPlayingController {
         }
     }
 
-    /// Most recent activity wins; ties keep the order of `players` (Spotify first).
     private func mostRecent(_ candidates: [any MusicPlayer]) -> (any MusicPlayer)? {
         var best: (any MusicPlayer)?
         var bestDate = Date.distantPast

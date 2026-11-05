@@ -1,31 +1,22 @@
 import Accelerate
 
-/// Splits audio into four bands, from bass to treble, and scales each to 0...1.
 /// Each band follows its own recent peak, so the bars move the same at any volume.
-///
-/// To keep the bars close to the music, it looks at the last 1024 samples (enough to tell
-/// bass from treble) but re-analyzes every 256 new samples, about every 5 ms.
 /// Not thread-safe: feed it from one queue.
 final class SpectrumAnalyzer {
     static let bandCount = 4
 
     private static let size = 1024
-    private static let hop = 256
+    private static let hop = 256 // ~5 ms, keeps the bars close to the music
     private static let bands: [(low: Float, high: Float)] = [(40, 150), (150, 600), (600, 2_500), (2_500, 9_000)]
-    /// Decibels between an empty and a full bar.
-    private static let range: Float = 30
-    /// Below this the music is treated as silence instead of being amplified.
-    private static let silence: Float = -75
-    /// How fast a band's peak falls back after a loud moment.
-    private static let peakDecayPerSecond: Float = 3
-    /// Time constants of the bars: they jump up with each beat and fall a little slower.
-    private static let riseTime: Float = 0.015
-    private static let fallTime: Float = 0.09
+    private static let range: Float = 30 // dB between an empty and a full bar
+    private static let silence: Float = -75 // dB; quieter is treated as silence, not amplified
+    private static let peakDecayPerSecond: Float = 3 // dB
+    private static let riseTime: Float = 0.015 // s
+    private static let fallTime: Float = 0.09 // s
 
     private let dft = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(SpectrumAnalyzer.size), .FORWARD)
     private let window = vDSP.window(ofType: Float.self, usingSequence: .hanningDenormalized, count: SpectrumAnalyzer.size, isHalfWindow: false)
 
-    /// The last `size` samples, written in a circle starting at `writeIndex`.
     private var history = [Float](repeating: 0, count: SpectrumAnalyzer.size)
     private var writeIndex = 0
     private var newSamples = 0
@@ -44,8 +35,7 @@ final class SpectrumAnalyzer {
         if let dft { vDSP_DFT_DestroySetup(dft) }
     }
 
-    /// Takes interleaved samples (the first channel is used) and returns the newest levels,
-    /// or nil when fewer than `hop` new samples have arrived since the last analysis.
+    /// Uses the first channel; nil until `hop` new samples have arrived.
     func process(_ samples: UnsafeBufferPointer<Float>, channels: Int, sampleRate: Double) -> [Double]? {
         var analyzed = false
         for index in stride(from: 0, to: samples.count, by: channels) {
@@ -62,7 +52,6 @@ final class SpectrumAnalyzer {
     }
 
     private func analyze(sampleRate: Float) {
-        // Oldest sample first: the part after writeIndex, then the part before it.
         let tail = Self.size - writeIndex
         frame.withUnsafeMutableBufferPointer { frame in
             history.withUnsafeBufferPointer { history in

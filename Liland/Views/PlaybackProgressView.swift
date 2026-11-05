@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Elapsed time, a draggable progress bar and remaining time.
 struct PlaybackProgressView: View {
     let viewModel: NotchViewModel
 

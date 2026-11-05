@@ -1,6 +1,5 @@
 import SwiftUI
 
-/// Shown when the island is hovered but there is no track to display.
 struct MessageView: View {
     let nowPlaying: NowPlayingController
     let notchHeight: CGFloat

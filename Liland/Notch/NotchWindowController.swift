@@ -1,13 +1,7 @@
 import AppKit
 import SwiftUI
 
-/// Owns the notch panel and decides when the island opens and closes.
-///
-/// The panel ignores the mouse except when the pointer is over the open island,
-/// so clicks around the notch keep reaching the menu bar and other apps.
-/// Hover is detected from global/local mouse monitors instead of SwiftUI hover,
-/// because a panel that ignores mouse events never receives hover.
-/// With "open only on click", hovering the notch does nothing until it is clicked.
+/// The panel ignores the mouse except over the open island; hover comes from NSEvent monitors.
 final class NotchWindowController {
     private let viewModel: NotchViewModel
     private let panel = NotchPanel()
@@ -78,7 +72,7 @@ final class NotchWindowController {
         }
     }
 
-    /// The closed island plus a small margin, so the edge of the notch still counts.
+    /// Small margin so the edge of the notch still counts.
     private var hotZone: CGRect {
         viewModel.geometry.screenRect(for: viewModel.mode).insetBy(dx: -4, dy: -4)
     }
@@ -173,7 +167,6 @@ final class NotchWindowController {
         panel.ignoresMouseEvents = true
     }
 
-    /// Briefly shows the full player when the song changes, like a Live Activity alert.
     private func peek() {
         guard Preferences.shouldPeekOnTrackChange, viewModel.status == .closed else { return }
         isPeeking = true

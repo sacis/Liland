@@ -1,29 +1,16 @@
 import AVFoundation
 import os
 
-/// Reshapes the music before it reaches the speakers: keeps some parts of it, equalizes
-/// it and moves it up or down in pitch.
-///
-/// `render` runs on the audio thread and never waits for the main thread; `apply` runs
-/// on the main thread. The parts are kept first (`DemucsSplitter`, or `StemSplitter` on Intel
-/// Macs) and brought back up to about the loudness of the whole song, then the equalizer and a
-/// limiter run, then the pitch.
+/// `render` runs on the audio thread and never waits for the main thread; `apply` runs on main.
 final class AudioProcessor {
     private static let maximumFrames: AVAudioFrameCount = 4096
-    /// The most kept parts are raised to match the whole song: +18 dB.
-    private static let maximumMakeup: Float = 8
-    /// Seconds over which the loudness of the song and of the kept parts is measured.
-    private static let loudnessWindow: Float = 3
-    /// Seconds the makeup gain takes to follow a change.
-    private static let makeupTime: Float = 0.3
-    /// Stretches where the kept parts are this much quieter than the song (-30 dB) are pauses,
-    /// like a singer between verses, and aren't counted: raising the gain there would only
-    /// bring up what leaked from the other instruments.
+    private static let maximumMakeup: Float = 8 // +18 dB
+    private static let loudnessWindow: Float = 3 // s
+    private static let makeupTime: Float = 0.3 // s
+    /// -30 dB: quieter stretches are pauses; raising the gain there would only bring up leakage.
     private static let pause: Float = 0.001
-    /// Seconds a stretch must last to count as a pause, longer than the gaps between drum hits.
-    private static let pauseWindow: Float = 0.4
-    /// Silence pushed through the pitch stage when it starts, to clear what it held from last time.
-    private static let pitchFlush = 2 * Int(maximumFrames)
+    private static let pauseWindow: Float = 0.4 // s, longer than the gaps between drum hits
+    private static let pitchFlush = 2 * Int(maximumFrames) // samples; clears what the pitch stage held
 
     private struct Settings: Equatable {
         var parts: StemSplitter.Parts = []
@@ -40,18 +27,14 @@ final class AudioProcessor {
         componentFlagsMask: 0
     ))
     private let timePitch = AVAudioUnitTimePitch()
-    /// The equalizer and the limiter.
     private let tone: RenderStage
-    /// The pitch delays the sound by about 85 ms even when bypassed, so it's a stage of
-    /// its own that only runs while the pitch is changed.
+    /// Delays ~85 ms even when bypassed, so it's a separate stage that only runs while pitched.
     private let pitch: RenderStage
     private let splitter: PartSplitter
     private let settings = OSAllocatedUnfairLock(initialState: Settings())
 
     // Only touched on the audio thread.
     private var rendered = Settings()
-    /// Perceived loudness of the song and of the kept parts, averaged over `loudnessWindow`,
-    /// and over `pauseWindow` to tell pauses.
     private var songMeter: LoudnessMeter
     private var partsMeter: LoudnessMeter
     private var songPower: Float = 0
@@ -59,8 +42,7 @@ final class AudioProcessor {
     private var recentSongPower: Float = 0
     private var recentPartsPower: Float = 0
     private var makeup: Float = 1
-    /// Samples to wait after the parts change before measuring their loudness: the splitter's
-    /// delay, plus the time for a part to fade in (the bass waits to be sure the song has one).
+    /// Samples: the splitter's delay plus a part's fade-in (the bass waits to be sure the song has one).
     private var warmup = 0
 
     init?(sampleRate: Double) {
@@ -100,7 +82,6 @@ final class AudioProcessor {
         // Leave room for boosted bands so they don't clip.
         let boost = max(0, adjustments.gains.max() ?? 0)
         equalizer.globalGain = -boost / 2
-        // The limiter catches what boosts and the makeup gain push over the top.
         limiter.bypass = parts.isEmpty && boost == 0
 
         timePitch.pitch = Float(adjustments.pitch * 100)
@@ -108,8 +89,7 @@ final class AudioProcessor {
         settings.withLock { $0 = latest }
     }
 
-    /// Reads the tapped music (interleaved) and writes the adjusted music to the device's output buffers.
-    /// Runs on the audio thread.
+    /// Runs on the audio thread; `source` is interleaved.
     func render(_ source: AudioBuffer, into destination: UnsafeMutableAudioBufferListPointer) {
         guard let samples = source.mData?.assumingMemoryBound(to: Float.self) else { return }
         let sourceChannels = max(Int(source.mNumberChannels), 1)
@@ -156,7 +136,6 @@ final class AudioProcessor {
                 splitter.reset()
                 makeup = 1
             }
-            // Measure the new parts from scratch; until then, hold the gain where it is.
             songPower = 0
             partsPower = 0
             recentSongPower = 0
@@ -173,8 +152,7 @@ final class AudioProcessor {
         rendered = latest
     }
 
-    /// Keeps the chosen parts, then raises them toward the loudness of the whole song as the
-    /// ear hears it, so taking instruments away doesn't make the music quieter.
+    /// Raises the kept parts toward the song's perceived loudness, so dropping parts doesn't quiet it.
     private func isolate(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         let song = songMeter.power(left: left, right: right, frames: frames)
         splitter.process(left: left, right: right, frames: frames, keeping: rendered.parts)
@@ -207,7 +185,6 @@ final class AudioProcessor {
         makeup = next
     }
 
-    /// Fills the first two channels of the first output stream (or its only one, mixed down).
     private func write(
         left: UnsafePointer<Float>,
         right: UnsafePointer<Float>,
@@ -231,13 +208,9 @@ final class AudioProcessor {
     }
 }
 
-/// Keeps some parts of stereo music and drops the rest, on the audio thread.
 protocol PartSplitter: AnyObject {
-    /// How many samples the parts lag behind the music.
-    var latency: Int { get }
-    /// Forgets the music heard so far, to start over without echoes of it.
+    var latency: Int { get } // samples
     func reset()
-    /// Replaces the samples of both channels, in place, with the parts to keep.
     func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: StemSplitter.Parts)
 }
 
@@ -247,7 +220,6 @@ extension StemSplitter: PartSplitter {
     var latency: Int { Self.latency }
 }
 
-/// Apple effects chained in an engine that renders on demand, from `input` to `output`.
 private final class RenderStage {
     let inputBuffer: AVAudioPCMBuffer
     let outputBuffer: AVAudioPCMBuffer
@@ -264,7 +236,6 @@ private final class RenderStage {
         guard let inputBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: maximumFrames),
               let outputBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: maximumFrames)
         else { return nil }
-        // Full length once; each render then sets how much of it is used.
         inputBuffer.frameLength = maximumFrames
         outputBuffer.frameLength = maximumFrames
         self.inputBuffer = inputBuffer
@@ -302,7 +273,6 @@ private final class RenderStage {
         engine.stop()
     }
 
-    /// Renders the first `frames` of the input into the output. False if the engine failed.
     func render(frames: Int) -> Bool {
         let byteSize = UInt32(frames * MemoryLayout<Float>.size)
         for index in 0..<2 {
@@ -314,8 +284,7 @@ private final class RenderStage {
     }
 }
 
-/// How loud music sounds to the ear, as loudness meters measure it (ITU BS.1770): a high-pass
-/// around 38 Hz and +4 dB above about 1.5 kHz, then the average power of both channels.
+/// ITU BS.1770 loudness: high-pass ~38 Hz and +4 dB above ~1.5 kHz, then mean power of both channels.
 private struct LoudnessMeter {
     private var leftShelf: Biquad, rightShelf: Biquad
     private var leftHighPass: Biquad, rightHighPass: Biquad

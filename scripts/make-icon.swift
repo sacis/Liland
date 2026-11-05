@@ -1,4 +1,3 @@
-// Generates Liland's app icon: the menu bar flower in peach on a sage tile.
 // Usage: swift scripts/make-icon.swift <output.png>  (run from the repo root)
 import AppKit
 
@@ -10,7 +9,7 @@ let image = NSImage(size: NSSize(width: size, height: size))
 image.lockFocus()
 let ctx = NSGraphicsContext.current!.cgContext
 
-// Squircle background on the standard macOS icon grid (100px margin).
+// Standard macOS icon grid (100px margin).
 let tile = CGRect(x: 100, y: 100, width: 824, height: 824)
 ctx.saveGState()
 ctx.setShadow(offset: CGSize(width: 0, height: -12), blur: 28, color: NSColor.black.withAlphaComponent(0.25).cgColor)

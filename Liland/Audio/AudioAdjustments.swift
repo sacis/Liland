@@ -1,30 +1,23 @@
 import Foundation
 
-/// How the user wants the music to sound in Advanced mode.
 struct AudioAdjustments: Equatable, Codable {
-    /// A part of the music that can be kept on its own, in the order the buttons show them.
-    /// Without stems this is an estimate, not a clean separation.
+    /// Case order is the button order. Without stems it's an estimate, not a clean separation.
     enum Part: String, CaseIterable, Codable {
         case vocals, guitar, bass, drums
     }
 
-    /// The equalizer's bands, from bass to treble. The first and last are shelves.
     static let bands: [(frequency: Float, label: String)] = [
         (80, "80"), (250, "250"), (1_000, "1k"), (4_000, "4k"), (10_000, "10k"),
     ]
     static let gainRange: ClosedRange<Float> = -12...12
     static let pitchRange: ClosedRange<Int> = -6...6
 
-    /// The parts to keep; empty plays the whole song.
     var isolated: Set<Part> = []
-    /// Decibels for each of `bands`.
-    var gains = [Float](repeating: 0, count: AudioAdjustments.bands.count)
-    /// Semitones up or down.
-    var pitch = 0
+    var gains = [Float](repeating: 0, count: AudioAdjustments.bands.count) // dB
+    var pitch = 0 // semitones
 
     static let neutral = AudioAdjustments()
 
-    /// Adds the part, or takes it out if it's already kept. Taking out the last one plays the whole song again.
     mutating func toggle(_ part: Part) {
         if isolated.remove(part) == nil {
             isolated.insert(part)
@@ -47,7 +40,7 @@ extension AudioAdjustments {
         case isolated, gains, pitch
     }
 
-    /// Anything missing or unknown (like settings from an older version) falls back to neutral.
+    /// Missing or unknown values (like settings from an older version) fall back to neutral.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         isolated = (try? container.decodeIfPresent(Set<Part>.self, forKey: .isolated)) ?? []

@@ -1,16 +1,4 @@
-// Liland's window into the system's Now Playing, what Control Center shows for any app.
-//
-// Since macOS 15.4 only Apple's own programs may use the private MediaRemote framework,
-// so Liland runs now-playing.pl with /usr/bin/perl, which loads this framework and calls
-// one of the two functions below. Apple can close this way in any macOS update.
-//
-//   liland_stream   Prints one JSON line per change until terminated:
-//                   {"state": {...}, "artwork": "<base64>" | null}
-//                   "state" is {} when nothing plays; "artwork" is only there when it changed.
-//   liland_command  Runs the command that follows "command" in the arguments:
-//                   play, pause, nextTrack, previousTrack,
-//                   seek SECONDS, shuffle MODE (1 off, 3 on), repeat MODE (1 off, 2 one, 3 all)
-//
+// Since macOS 15.4 only Apple binaries may use MediaRemote, so /usr/bin/perl loads this helper.
 // Adapted from mediaremote-adapter by Jonas van den Berg and contributors
 // (https://github.com/ungive/mediaremote-adapter, BSD 3-Clause, see LICENSE).
 
@@ -25,7 +13,6 @@ typedef void (^PIDCompletion)(int pid);
 typedef void (^IsPlayingCompletion)(bool isPlaying);
 typedef void (^ClientCompletion)(id client);
 
-/// The private MRClient class that MediaRemote passes to `ClientCompletion`.
 @protocol MRClient <NSObject>
 - (NSString *)parentApplicationBundleIdentifier;
 @end
@@ -78,7 +65,7 @@ static void loadMediaRemote(void) {
 #pragma mark - Stream
 
 static dispatch_queue_t queue;
-/// Bumped on every refresh, so that a slow earlier refresh can't overwrite a newer one.
+/// Bumped on every refresh, so a slow earlier refresh can't overwrite a newer one.
 static uint64_t generation;
 static BOOL refreshScheduled;
 static NSDictionary *lastState;
@@ -111,7 +98,6 @@ static void publish(int pid, BOOL playing, NSString *parentBundleIdentifier, NSD
     NSMutableDictionary *state = [NSMutableDictionary dictionary];
     NSData *artwork = nil;
 
-    // Media without a title or an app isn't shown, as in mediaremote-adapter.
     if (pid > 0 && bundleIdentifier && [title isKindOfClass:NSString.class] && title.length > 0) {
         state[@"bundleIdentifier"] = bundleIdentifier;
         if (parentBundleIdentifier) state[@"parentApplicationBundleIdentifier"] = parentBundleIdentifier;
@@ -145,7 +131,6 @@ static void publish(int pid, BOOL playing, NSString *parentBundleIdentifier, NSD
     printLine(line);
 }
 
-/// Asks MediaRemote for everything at once and publishes when all answers are in.
 static void refresh(void) {
     uint64_t current = ++generation;
     __block int pid = 0;
@@ -184,7 +169,6 @@ static void refresh(void) {
     });
 }
 
-/// Merges bursts of notifications, e.g. title and artwork arriving separately.
 static void scheduleRefresh(void) {
     dispatch_async(queue, ^{
       if (refreshScheduled) return;
@@ -227,8 +211,7 @@ EXPORT void liland_stream(void) {
 
 #pragma mark - Commands
 
-/// MediaRemote delivers commands asynchronously; one more round trip makes sure
-/// this one went out before the process exits.
+/// MediaRemote delivers commands asynchronously; one more round trip ensures this one went out.
 static void waitForDelivery(void) {
     dispatch_semaphore_t done = dispatch_semaphore_create(0);
     MR.getNowPlayingApplicationPID(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(int pid) {

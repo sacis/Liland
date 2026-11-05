@@ -1,8 +1,8 @@
 import Foundation
 
-/// A two-pole filter from the Audio EQ Cookbook, run one sample at a time. Safe on the audio thread.
+/// Audio EQ Cookbook biquad. Safe on the audio thread.
 struct Biquad {
-    /// The Q of the flattest response, without a bump at the corner.
+    /// Butterworth Q: the flattest response, no bump at the corner.
     static let flat = Float(0.5).squareRoot()
 
     private let b0: Float, b1: Float, b2: Float, a1: Float, a2: Float

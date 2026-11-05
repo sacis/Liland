@@ -1,10 +1,7 @@
 import AppKit
 
-/// One source of what's playing that the island can show and control.
 protocol MusicPlayer: AnyObject {
-    /// Stays the same for the player's lifetime; the controller keys its history by it.
     var id: String { get }
-    /// The app making the sound, for the equalizer to listen to.
     var audioBundleIdentifier: String? { get }
     var displayName: String { get }
     var icon: NSImage? { get }
@@ -22,11 +19,8 @@ protocol MusicPlayer: AnyObject {
     func nextTrack()
     func previousTrack()
     func seek(to seconds: TimeInterval)
-    /// Does nothing when the snapshot has no shuffle state.
     func toggleShuffle()
-    /// Off → all → one → off. Does nothing when the snapshot has no repeat mode.
     func cycleRepeat()
     func open()
-    /// Shows the playing song's album in the app, or just opens the app when it can't.
     func openAlbum()
 }

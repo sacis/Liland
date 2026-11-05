@@ -1,17 +1,11 @@
 import AppKit
 import Observation
 
-/// Whatever the system shows as Now Playing in Control Center: Deezer, TIDAL,
-/// YouTube or any site in a browser…
-///
-/// Apps that have their own `ScriptablePlayer` are ignored here, so that Spotify and
-/// Apple Music keep working through AppleScript even if Apple closes this way.
+/// Apps with a `ScriptablePlayer` are skipped so they keep working if Apple closes MediaRemote.
 @Observable
 final class SystemPlayer: MusicPlayer {
     private struct SourceApp: Equatable {
-        /// The app the user knows, e.g. Safari rather than its WebKit process.
         let bundleIdentifier: String
-        /// The process that reports the media, which is the one making the sound.
         let reportingBundleIdentifier: String
         let url: URL?
         let name: String
@@ -23,33 +17,21 @@ final class SystemPlayer: MusicPlayer {
     }
 
     enum Access: Equatable {
-        /// The helper can't run here, e.g. a future macOS without Perl.
         case unavailable
-        /// A downloaded copy whose helper the user hasn't allowed yet.
         case needsApproval
-        /// The user chose to turn it on; macOS holds the helper until they click
-        /// Open Anyway in Privacy & Security.
         case awaitingApproval
         case ready
     }
 
-    /// Without artwork after this long, the track is shown without it (it can still arrive later).
     private static let artworkWait: TimeInterval = 1.5
-    /// Safari reports some sites, such as Deezer, as paused while they play. They send the
-    /// position twice a second while playing and go quiet once paused, so a moving position
-    /// counts as playing until no update has arrived for this long.
+    /// Safari reports some sites (Deezer) as paused while playing; a recently moved position wins.
     private static let positionSilence: TimeInterval = 3
-    /// Notification sounds, such as a new message in WhatsApp Web, briefly take over the
-    /// browser's Now Playing. Media shorter than this isn't music and is ignored.
+    /// Shorter media is a notification sound (e.g. WhatsApp Web) taking over Now Playing, not music.
     private static let shortestMedia: TimeInterval = 5
-    /// MediaRemote sometimes reports nothing for a split second while the song plays on.
-    /// Nothing has to last this long before the song goes away.
+    /// MediaRemote briefly reports nothing mid-song; an empty state must last this long to count.
     private static let emptyPatience: TimeInterval = 1.5
-    /// How long the helper may wait for the user to allow it in Privacy & Security.
     private static let approvalPatience: TimeInterval = 600
-    /// The macOS version on which the helper last reported something, see `isKnownToWork`.
     private static let workingSystemKey = "systemNowPlayingWorksOn"
-    /// The helper build the user allowed, so it isn't asked for again until it changes.
     private static let approvedHelperKey = "approvedNowPlayingHelper"
 
     let id = "system"
@@ -59,8 +41,6 @@ final class SystemPlayer: MusicPlayer {
     private(set) var access = Access.unavailable
     private var app: SourceApp?
 
-    /// True once the helper has reported media on this version of macOS, so the island
-    /// can say that any app works. Reset by a macOS update, which may have closed the way.
     private(set) var isKnownToWork: Bool
 
     @ObservationIgnored var onChange: (() -> Void)?
@@ -74,14 +54,10 @@ final class SystemPlayer: MusicPlayer {
     @ObservationIgnored private var lastPosition: (trackID: String, elapsed: TimeInterval)?
     @ObservationIgnored private var silenceWork: DispatchWorkItem?
     @ObservationIgnored private var clearWork: DispatchWorkItem?
-    /// Whether each track is music, once known; see `isMusic`.
     @ObservationIgnored private var musicVerdicts: [String: Bool] = [:]
     @ObservationIgnored private var checkingTrackIDs: Set<String> = []
-    /// The latest state, held while its browser is asked whether it comes from a music service.
     @ObservationIgnored private var pending: (trackID: String, state: [String: Any], artwork: Data?)?
-    /// Recent songs' artwork: a song that gets its place back from other media comes without it.
     @ObservationIgnored private var recentArtwork: [(trackID: String, data: Data)] = []
-    /// Tracks whose artwork was already looked up in Deezer's catalog; see `lookUpArtwork`.
     @ObservationIgnored private var artworkLookups: Set<String> = []
 
     var audioBundleIdentifier: String? { app?.reportingBundleIdentifier }
@@ -113,8 +89,6 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Allowing the helper
 
-    /// Loads the helper, which makes macOS show its alert, then opens Privacy & Security
-    /// where the user clicks Open Anyway, as they did for Liland itself.
     func turnOn() {
         guard access == .needsApproval, let bridge else { return }
         access = .awaitingApproval
@@ -137,8 +111,7 @@ final class SystemPlayer: MusicPlayer {
         access = .ready
     }
 
-    /// Stuck before its first answer: in a downloaded copy, macOS is holding it for approval
-    /// (a new Liland version brings a new helper); otherwise this way doesn't work here.
+    /// In a downloaded copy, a new Liland version brings a new helper that macOS holds for approval.
     private func helperStuck() {
         if let bridge, bridge.isQuarantined {
             UserDefaults.standard.removeObject(forKey: Self.approvedHelperKey)
@@ -148,7 +121,6 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// The stream is live, so there is nothing to ask for.
     func refresh() {}
 
     // MARK: - Reading state
@@ -157,7 +129,6 @@ final class SystemPlayer: MusicPlayer {
         pending = nil
         clearWork?.cancel()
         clearWork = nil
-        // Notification sounds don't need asking whether they're music.
         if let duration = Self.number(state["duration"]), duration > 0, duration < Self.shortestMedia {
             otherMediaReported(state)
             return
@@ -206,7 +177,6 @@ final class SystemPlayer: MusicPlayer {
         let app = self.app.flatMap { $0.bundleIdentifier == bundleID && $0.reportingBundleIdentifier == reporting ? $0 : nil }
             ?? Self.sourceApp(bundleID, reporting: reporting)
         let timestamp = Self.number(state["timestamp"]).map(Date.init(timeIntervalSince1970:))
-        // MediaRemote's shuffle modes: 1 off, 2 albums, 3 songs. Many players don't report one.
         let shuffleMode = Self.number(state["shuffleMode"]).map(Int.init)
         let elapsed = Self.number(state["elapsedTime"]) ?? 0
         let isReportedPlaying = state["playing"] as? Bool ?? false
@@ -233,9 +203,6 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// Music services and music apps, not a WhatsApp voice message or an Instagram video.
-    /// Browsers are asked which site the media comes from, once per track; meanwhile this is
-    /// nil and the state waits in `pending`. Elsewhere, music is what names an artist.
     private func isMusic(_ track: NowPlayingTrack, from bundleID: String) -> Bool? {
         if let verdict = musicVerdicts[track.id] { return verdict }
         guard BrowserTab.canInspect(bundleID) else {
@@ -269,10 +236,7 @@ final class SystemPlayer: MusicPlayer {
         if recentArtwork.count > 10 { recentArtwork.removeFirst() }
     }
 
-    /// Other media holds the system's Now Playing (a voice message, a video, a notification
-    /// sound) and plays over the song, which keeps its place. Nothing comes from the song
-    /// meanwhile, so it only counts as paused once the other media has stopped and the song
-    /// still hasn't come back.
+    /// Other media plays over the song, which keeps its place; paused only once that media stops.
     private func otherMediaReported(_ state: [String: Any]) {
         silenceWork?.cancel()
         silenceWork = nil
@@ -281,7 +245,6 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// Lets the song go once nothing has been reported for a moment, so a blip doesn't hide it.
     private func scheduleClear() {
         guard snapshot != nil else {
             update(app: nil, snapshot: nil, artworkData: nil)
@@ -295,7 +258,6 @@ final class SystemPlayer: MusicPlayer {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.emptyPatience, execute: work)
     }
 
-    /// Shows a site that stopped sending its position as paused.
     private func scheduleSilenceCheck() {
         let work = DispatchWorkItem { [weak self] in
             guard let self, var snapshot = self.snapshot, snapshot.isPlaying else { return }
@@ -317,7 +279,6 @@ final class SystemPlayer: MusicPlayer {
 
         if snapshot != self.snapshot {
             self.snapshot = snapshot
-            // On a new track, the controller asks for its artwork from here.
             onChange?()
         }
         deliverArtwork()
@@ -354,8 +315,7 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Artwork
 
-    /// Artwork often arrives after the title. The request stays open while its track is
-    /// current, so the cover shows up as soon as it comes, and changes if the player sends a new one.
+    /// The request stays open while its track is current: artwork often arrives late or changes.
     func loadArtwork(for track: NowPlayingTrack, completion: @escaping (NSImage?) -> Void) {
         artworkRequest = (track.id, completion)
         deliveredImage = artworkImage
@@ -369,8 +329,7 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// Some sites, such as Deezer in Safari, never send their artwork. The cover is then
-    /// looked up once in Deezer's public catalog; artwork the player sends later still wins.
+    /// Some sites (Deezer in Safari) never send artwork; artwork the player sends later still wins.
     private func lookUpArtwork(for track: NowPlayingTrack) {
         guard !track.artist.isEmpty, artworkLookups.insert(track.id).inserted else { return }
         if artworkLookups.count > 500 { artworkLookups = [track.id] }
@@ -383,7 +342,6 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// The album's cover, or the song's when the site doesn't name the album.
     private static func catalogArtwork(for track: NowPlayingTrack, completion: @escaping (Data?) -> Void) {
         let byAlbum = !track.album.isEmpty
         var components = URLComponents(string: byAlbum ? "https://api.deezer.com/search/album" : "https://api.deezer.com/search")
@@ -397,8 +355,7 @@ final class SystemPlayer: MusicPlayer {
         URLSession.shared.dataTask(with: url) { data, _, _ in
             let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
             let results = json?["data"] as? [[String: Any]] ?? []
-            // Albums carry their cover; songs carry their album's. Only the same artist counts
-            // (sites may list several, "A, B"), and the exact name comes first.
+            // Only the same artist counts (sites may list several, "A, B"); the exact name comes first.
             let covers: [(name: String, cover: String)] = results.compactMap { result in
                 let album = byAlbum ? result : result["album"] as? [String: Any]
                 guard let name = result["title"] as? String,
@@ -431,8 +388,7 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Commands
 
-    /// Says which one, play or pause: Safari can think a playing site is paused, and its
-    /// own toggle would then play it again instead of pausing.
+    /// Sends play or pause explicitly: Safari can think a playing site is paused and toggle wrongly.
     func playPause() {
         let shouldPause = snapshot?.isPlaying ?? false
         if var snapshot {
@@ -445,11 +401,9 @@ final class SystemPlayer: MusicPlayer {
         silenceWork?.cancel()
         silenceWork = nil
         if shouldPause {
-            // A position already on its way mustn't count as still playing.
             lastPosition = nil
         } else {
-            // Undone if the song doesn't start, e.g. when Safari sends the command to the
-            // tab that made the last sound, such as WhatsApp Web, instead of the song's.
+            // Undone if the song doesn't start, e.g. Safari sent the command to the WhatsApp Web tab instead.
             scheduleSilenceCheck()
         }
         bridge?.send(shouldPause ? .pause : .play)
@@ -496,7 +450,6 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - App
 
-    /// In a browser, goes straight to the tab the song plays in when it can find it.
     func open() {
         guard let app, let url = app.url else { return }
         let track = snapshot?.track
@@ -508,8 +461,7 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// Only brings the song forward: taking its tab to the album page would reload it and
-    /// stop the music, and another tab of the same site often pauses it too.
+    /// Taking the tab to the album page would reload it and stop the music.
     func openAlbum() {
         open()
     }

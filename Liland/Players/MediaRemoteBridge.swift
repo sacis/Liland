@@ -1,22 +1,13 @@
 import AppKit
 import CryptoKit
 
-/// Reads and controls the system's Now Playing through the bundled NowPlayingHelper,
-/// run with /usr/bin/perl: since macOS 15.4 only Apple's own programs may use MediaRemote.
-///
-/// Apple can close this way in any macOS update. The stream then stays empty, or keeps
-/// failing and is given up on; Spotify and Apple Music don't depend on it.
+/// Since macOS 15.4 only Apple binaries may use MediaRemote, so the helper runs under perl.
 final class MediaRemoteBridge {
-    /// What the system reports as playing (empty when nothing plays or the helper stopped),
-    /// and the artwork. Called on the main queue.
     var onUpdate: ((_ state: [String: Any], _ artwork: Data?) -> Void)?
-    /// The helper answered for the first time since `start`.
     var onReady: (() -> Void)?
-    /// The helper didn't answer within the patience given to `start`, and was stopped.
     var onStuck: (() -> Void)?
 
     private static let perl = URL(fileURLWithPath: "/usr/bin/perl")
-    /// A stream that lasts this long counts as healthy and resets the failure count.
     private static let healthyRun: TimeInterval = 60
     private static let maxFailures = 5
 
@@ -32,7 +23,6 @@ final class MediaRemoteBridge {
     private var isStopping = false
     private var terminateObserver: NSObjectProtocol?
 
-    /// nil when a piece is missing, for example if a future macOS no longer ships Perl.
     init?(bundle: Bundle = .main) {
         let fileManager = FileManager.default
         guard let script = bundle.url(forResource: "now-playing", withExtension: "pl"),
@@ -51,16 +41,12 @@ final class MediaRemoteBridge {
         stop()
     }
 
-    /// True in a copy downloaded from the internet. Liland isn't notarized, so the first time
-    /// Perl loads the helper macOS holds it until the user clicks Open Anyway in Privacy &
-    /// Security, like for Liland itself. The flag stays after that, so it doesn't tell whether
-    /// the user already did.
+    /// Unnotarized download: macOS holds the helper until Open Anyway; the flag stays after approval.
     var isQuarantined: Bool {
         let binary = framework.appendingPathComponent("NowPlayingHelper")
         return getxattr(binary.path, "com.apple.quarantine", nil, 0, 0, 0) >= 0
     }
 
-    /// Identifies this build of the helper, which macOS approves on its own.
     var helperIdentity: String {
         let binary = framework.appendingPathComponent("NowPlayingHelper")
         guard let data = try? Data(contentsOf: binary) else { return "" }
@@ -69,8 +55,6 @@ final class MediaRemoteBridge {
 
     // MARK: - Streaming
 
-    /// `patience`: how long to wait for the helper's first answer, which it prints right
-    /// away unless macOS is holding it for approval.
     func start(patience: TimeInterval = 10) {
         guard process == nil else { return }
         isStopping = false
@@ -155,7 +139,7 @@ final class MediaRemoteBridge {
 
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
         NSLog("Liland: Now Playing helper exited with status \(ended.terminationStatus)\(trimmed.isEmpty ? "" : ": \(trimmed)")")
-        // Ending before its first answer isn't a hiccup worth retrying, e.g. macOS refused it.
+        // Ending before the first answer (e.g. macOS refused it) isn't worth retrying.
         guard hasOutput else {
             stop()
             onStuck?()
@@ -180,7 +164,6 @@ final class MediaRemoteBridge {
         }
     }
 
-    /// Calls `onLine` with each newline-terminated line until the pipe closes.
     private static func readLines(from handle: FileHandle, onLine: (Data) -> Void) {
         var buffer = Data()
         while true {
@@ -220,7 +203,6 @@ final class MediaRemoteBridge {
         }
     }
 
-    /// Each command is a short run of the helper; a stuck one is stopped after a few seconds.
     func send(_ command: Command) {
         let process = makeProcess(["command"] + command.arguments)
         process.standardOutput = FileHandle.nullDevice

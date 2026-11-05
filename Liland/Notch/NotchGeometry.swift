@@ -1,14 +1,9 @@
 import AppKit
 
-/// What the island is currently showing. Each mode has its own size and corner radii.
 enum NotchMode: Equatable {
-    /// Nothing playing: blends into the hardware notch.
     case idle
-    /// Music playing: the notch grows sideways with artwork and an equalizer.
     case compact
-    /// Hovered with a track: full player.
     case open
-    /// Hovered with a track in Advanced mode: the player, with the sound controls below.
     case openAdvanced
     /// Hovered without a track (Spotify closed, nothing playing, no permission).
     case openMessage

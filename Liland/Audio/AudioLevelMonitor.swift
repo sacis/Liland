@@ -1,17 +1,11 @@
 import Foundation
 import Observation
 
-/// Listens to the active player so the equalizer can move with the music, and in
-/// Advanced mode plays the player's sound through the user's adjustments.
-///
-/// `live` is nil whenever live audio isn't available (option off, permission denied,
-/// macOS older than 14.4, nothing playing), and the equalizer keeps its own animation.
+/// `live` is nil when live audio isn't available (option off, denied, before macOS 14.4, nothing playing).
 @Observable
 final class AudioLevelMonitor {
-    /// About how late the tap already is: one Core Audio buffer plus half the analysis window.
-    private static let analysisLatency: TimeInterval = 0.02
+    private static let analysisLatency: TimeInterval = 0.02 // one Core Audio buffer + half the analysis window
 
-    /// Set once the tap delivers its first levels.
     private(set) var live: LiveLevels?
     private(set) var permission = AudioCapturePermission.Status.unknown
 
@@ -41,7 +35,6 @@ final class AudioLevelMonitor {
         if #available(macOS 14.4, *) { true } else { false }
     }
 
-    /// The parts Advanced mode can keep: the guitar only where its network runs.
     var isolatableParts: [AudioAdjustments.Part] {
         AudioAdjustments.Part.allCases.filter { $0 != .guitar || DemucsSplitter.canIsolateGuitar }
     }
@@ -50,10 +43,8 @@ final class AudioLevelMonitor {
     @ObservationIgnored private var isPlaying = false
     @ObservationIgnored private var tap: AnyObject?
     @ObservationIgnored private var processor: AudioProcessor?
-    /// The output rate the running tap was made to adjust at, nil when it only listens.
-    @ObservationIgnored private var adjustedSampleRate: Double?
-    /// The levels of the running tap, before it has delivered anything.
-    @ObservationIgnored private var starting: LiveLevels?
+    @ObservationIgnored private var adjustedSampleRate: Double? // nil when it only listens
+    @ObservationIgnored private var starting: LiveLevels? // until it delivers its first levels
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var hasRequested = false
     @ObservationIgnored private var isRequesting = false
@@ -64,8 +55,7 @@ final class AudioLevelMonitor {
         update()
     }
 
-    /// Re-run every second while it matters, to notice the permission being granted
-    /// in Settings, the player restarting, or a new output device (like headphones).
+    /// Re-run every second to notice the permission granted in Settings, player restarts, new outputs.
     private func update() {
         guard isSupported, isEnabled || isAdvanced else {
             stop()
@@ -110,7 +100,6 @@ final class AudioLevelMonitor {
         guard #available(macOS 14.4, *) else { return }
         let processes = ProcessAudioTap.processes(of: bundleID)
         let outputUID = ProcessAudioTap.defaultOutputDeviceUID
-        // A new rate (changed in Audio MIDI Setup, or another device) needs a new processor.
         let sampleRate = isAdvanced ? ProcessAudioTap.defaultOutputSampleRate : nil
 
         if let current = tap as? ProcessAudioTap,

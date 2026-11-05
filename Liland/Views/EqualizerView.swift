@@ -1,7 +1,5 @@
 import SwiftUI
 
-/// Four bars tinted with the album color. They follow the music's real sound when
-/// `live` is given, bounce on their own otherwise, and freeze low when paused.
 struct EqualizerView: View {
     let isPlaying: Bool
     let color: Color

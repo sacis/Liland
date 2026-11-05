@@ -1,25 +1,9 @@
-"""Converts HTDemucs (Meta's music source separation network) to the Core ML models Liland ships.
+"""Converts HTDemucs and HTDemucs 6s (guitar only) to Liland's Core ML models in Liland/Resources.
 
-Two of them: HTDemucs, for the vocals, the bass and the drums, and its six-source sibling
-HTDemucs 6s, only to tell the guitar apart, since its other parts come out a little worse.
-
-Only the network goes into each model. The spectrogram it reads, the inverse that turns its
-output back into sound, and the normalization around both are done by `DemucsSplitter.swift`,
-in single precision, since the network itself runs in half precision.
-
-The shapes are fixed: HTDemucs hears 44 spectrogram frames, about one second of music at
-44.1 kHz, and HTDemucs 6s twice that, which it needs to make out the guitar.
-
-Liland runs them on the GPU. On the Neural Engine their normalizations blow up its rounding
-errors in the frequencies that are nearly silent, and the parts come out wrong (about 8 dB from
-the original instead of 49 dB on the GPU); it isn't faster there anyway.
-
-    python3.11 -m venv venv
-    venv/bin/pip install torch demucs coremltools
-    venv/bin/python tools/convert_htdemucs.py [htdemucs] [htdemucs_6s]
-
-It writes Liland/Resources/HTDemucs.mlpackage and HTDemucs6s.mlpackage (or just the ones named),
-and prints how closely each Core ML model follows the original.
+Setup: python3.11 -m venv venv && venv/bin/pip install torch demucs coremltools
+Usage: venv/bin/python tools/convert_htdemucs.py [htdemucs] [htdemucs_6s]
+Only the network: spectrograms and normalization run in DemucsSplitter.swift, in single precision.
+Checked on the GPU: on the Neural Engine rounding errors ruin near-silent bands (~8 dB vs 49 dB).
 """
 
 import os
@@ -36,13 +20,12 @@ from einops import rearrange
 HOP = 1024
 BINS = 2048
 RESOURCES = os.path.join(os.path.dirname(__file__), "..", "Liland", "Resources")
-# The pretrained Demucs models, the packages made from them, and how many spectrogram frames each hears.
+# name -> (package, spectrogram frames in); 44 frames is ~1 s, 6s needs twice that for the guitar.
 MODELS = {"htdemucs": ("HTDemucs", 44), "htdemucs_6s": ("HTDemucs6s", 88)}
 
 
 class LayerGroupNorm(torch.nn.Module):
-    """A GroupNorm worked out as a layer_norm over each group, then its per-channel scale and
-    shift: the same numbers, in one Core ML op instead of a dozen, which runs faster on the GPU."""
+    """GroupNorm as one layer_norm per group plus affine: same numbers, one Core ML op, faster on GPU."""
 
     def __init__(self, norm):
         super().__init__()
@@ -76,8 +59,7 @@ class Network(torch.nn.Module):
     def __init__(self, model, spectrum, wave):
         super().__init__()
         self.model = model
-        # The transformer works out its position embeddings from the shapes it gets, with Python
-        # arithmetic Core ML can't follow. The shapes are fixed, so they're worked out once here.
+        # Position embeddings use Python shape math Core ML can't follow; shapes are fixed, so precompute.
         shapes = {}
         hook = model.crosstransformer.register_forward_hook(
             lambda _, inputs, __: shapes.update(x=inputs[0].shape, xt=inputs[1].shape)
@@ -203,7 +185,7 @@ def convert(name, package, frames):
     )
     output = os.path.join(RESOURCES, f"{package}.mlpackage")
     mlmodel.save(output)
-    # Left over from the export, and nothing in the package refers to it.
+    # Export leftover; nothing in the package refers to it.
     debug = os.path.join(output, "executorch_debug_handle_mapping.json")
     if os.path.exists(debug):
         os.remove(debug)
