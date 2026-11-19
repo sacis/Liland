@@ -150,3 +150,5 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 ## ★ créditos
 
 a leitura do deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de jonas van den berg e colaboradores, sob a licença bsd de 3 cláusulas (veja [nowplayinghelper/license](NowPlayingHelper/LICENSE)).
+
+a separação de instrumentos usa o [htdemucs](https://github.com/facebookresearch/demucs) (incluindo o htdemucs_6s, que separa a guitarra), de alexandre défossez, simon rouard e colaboradores da meta ai research, sob a licença mit. os modelos foram convertidos pra core ml pra rodar no próprio mac.
