@@ -17,7 +17,7 @@ final class DemucsSplitter {
     fileprivate static let fade = 1024 // 23 ms crossfade
     /// Seconds of inference slack: on M5 ~30 ms for HTDemucs, ~45 ms with guitar, up to 70 ms under GPU load.
     fileprivate static let margin = 0.1
-    fileprivate static let partCount = 4 // vocals, bass, drums, guitar (bits of Parts)
+    fileprivate static let partCount = 5 // vocals, bass, drums, guitar, other (bits of Parts)
     private static let ramp = 256 // samples; fades around gaps so they don't click
 
     /// Intel Macs fall back to `StemSplitter`.
@@ -35,6 +35,12 @@ final class DemucsSplitter {
 
     let latency: Int // samples
     private(set) var missed = 0 // samples played silent: parts not ready in time
+    /// Samples a change of kept parts crossfades over: just enough not to click, unless set longer.
+    var partFade: Int
+
+    private var keptParts: Parts = []
+    private var fadingFrom: Parts = []
+    private var faded = Int.max // samples into the crossfade
 
     private let exchange = Exchange()
     private var written = 0
@@ -47,6 +53,7 @@ final class DemucsSplitter {
     init?(sampleRate: Double) {
         guard sampleRate > 0 else { return nil }
         latency = Int((Double(Self.ahead + Self.hop + Self.fade) / Self.rate + Self.margin) * sampleRate)
+        partFade = Int(0.03 * sampleRate)
         guard let worker = Worker(exchange: exchange, sampleRate: sampleRate) else { return nil }
         let thread = Thread { worker.run() }
         thread.name = "Liland.DemucsSplitter"
@@ -88,6 +95,13 @@ final class DemucsSplitter {
         // Model failed: pass the original audio through.
         guard !hasFailed else { return }
 
+        if parts != keptParts {
+            // From silence (nothing kept before) there is nothing to fade from.
+            fadingFrom = keptParts
+            faded = keptParts.isEmpty ? .max : 0
+            keptParts = parts
+        }
+
         let start = max(restart, origin)
         let step = 1 / Float(Self.ramp)
         for index in 0..<frames {
@@ -96,9 +110,14 @@ final class DemucsSplitter {
             if position >= start && position < produced {
                 gain = produced - position > Self.ramp ? min(gain + step, 1) : max(gain - step, 0)
                 let slot = position & wrap
-                for part in 0..<Self.partCount where parts.contains(Parts(rawValue: UInt8(1 << part))) {
-                    leftSum += exchange.output[2 * part * capacity + slot]
-                    rightSum += exchange.output[(2 * part + 1) * capacity + slot]
+                (leftSum, rightSum) = sum(of: parts, at: slot)
+                if faded < partFade {
+                    // Equal power, so the overall level holds through the change.
+                    let angle = Float.pi / 2 * Float(faded) / Float(partFade)
+                    let (oldLeft, oldRight) = sum(of: fadingFrom, at: slot)
+                    leftSum = leftSum * sin(angle) + oldLeft * cos(angle)
+                    rightSum = rightSum * sin(angle) + oldRight * cos(angle)
+                    faded += 1
                 }
             } else {
                 if position >= start { missed += 1 }
@@ -107,6 +126,16 @@ final class DemucsSplitter {
             left[index] = leftSum * gain
             right[index] = rightSum * gain
         }
+    }
+
+    private func sum(of parts: Parts, at slot: Int) -> (left: Float, right: Float) {
+        let capacity = Exchange.capacity
+        var left: Float = 0, right: Float = 0
+        for part in 0..<Self.partCount where parts.contains(Parts(rawValue: UInt8(1 << part))) {
+            left += exchange.output[2 * part * capacity + slot]
+            right += exchange.output[(2 * part + 1) * capacity + slot]
+        }
+        return (left, right)
     }
 }
 
@@ -291,6 +320,7 @@ private final class Worker {
     private static let restSource = 2
     private static let guitarSources = (guitar: 4, piano: 5, rest: 2)
     private static let guitarPart = 3
+    private static let otherPart = 4
 
     private static let musicCapacity = 1 << 17 // samples at the networks' rate
     private static let chunk = 4096 // device samples
@@ -538,9 +568,11 @@ private final class Worker {
             write()
             return
         }
+        // Always all of them, so switching parts is heard at once instead of a latency later.
         for (part, source) in Self.separatedSources.enumerated() {
             render(separating, source: source, into: part)
         }
+        render(separating, source: Self.restSource, into: Self.otherPart)
         if let guitar {
             listen(guitar, endingAt: end)
             if predict(guitar, endingAt: end) {

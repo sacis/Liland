@@ -31,6 +31,11 @@ final class AudioLevelMonitor {
         }
     }
 
+    /// DJ mode plays the music itself: this lets go of the player meanwhile.
+    var isSuspended = false {
+        didSet { update() }
+    }
+
     var isSupported: Bool {
         if #available(macOS 14.4, *) { true } else { false }
     }
@@ -57,7 +62,7 @@ final class AudioLevelMonitor {
 
     /// Re-run every second to notice the permission granted in Settings, player restarts, new outputs.
     private func update() {
-        guard isSupported, isEnabled || isAdvanced else {
+        guard isSupported, isEnabled || isAdvanced, !isSuspended else {
             stop()
             return
         }

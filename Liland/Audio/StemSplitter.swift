@@ -10,6 +10,11 @@ final class StemSplitter {
         static let drums = Parts(rawValue: 1 << 2)
         /// Only `DemucsSplitter` keeps it; this splitter can't tell it from the rest.
         static let guitar = Parts(rawValue: 1 << 3)
+        /// Everything that isn't vocals, bass or drums (keys, synths, guitar…). Only `DemucsSplitter` keeps it.
+        static let other = Parts(rawValue: 1 << 4)
+
+        static let instrumental: Parts = [.bass, .drums, .other]
+        static let everything: Parts = [.vocals, .bass, .drums, .other]
     }
 
     private static let size = 2048

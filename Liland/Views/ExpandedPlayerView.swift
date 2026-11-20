@@ -32,6 +32,17 @@ struct ExpandedPlayerView: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.5))
             Spacer()
+            if DJController.isSupported && nowPlaying.activePlayer?.id == SpotifyInstance.bundleIdentifier {
+                Button(action: nowPlaying.dj.enter) {
+                    Image(systemName: "dial.medium")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                        .frame(width: 22, height: 16)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help("DJ Mode")
+            }
             if let player = nowPlaying.activePlayer, let icon = player.icon {
                 Button { player.open() } label: {
                     Image(nsImage: icon)

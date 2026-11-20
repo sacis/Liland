@@ -45,6 +45,13 @@ private struct MenuContent: View {
                 Button("Allow Audio Access in Settings…", action: AudioCapturePermission.openSettings)
             }
         }
+        if DJController.isSupported {
+            Toggle("DJ Mode", isOn: Binding {
+                nowPlaying.dj.isActive
+            } set: { isOn in
+                if isOn { nowPlaying.dj.enter() } else { nowPlaying.dj.exit() }
+            })
+        }
         Toggle("Open at Login", isOn: $launchAtLogin)
             .onChange(of: launchAtLogin) { _, enabled in
                 LaunchAtLogin.set(enabled)

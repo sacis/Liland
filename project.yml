@@ -47,10 +47,16 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.flaviasilva.Liland
         PRODUCT_NAME: Liland
         CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
+        # A certificate made on this Mac (no Apple account): unlike "-", macOS keeps the Accessibility and other
+        # permissions across builds and updates, since they're tied to the certificate, not to each build.
+        CODE_SIGN_IDENTITY: "Liland Local Signing"
         ENABLE_HARDENED_RUNTIME: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         COMBINE_HIDPI_IMAGES: YES
+      configs:
+        Debug:
+          # Xcode's separate debug dylib fails library validation under a certificate with no team.
+          ENABLE_DEBUG_DYLIB: NO
     scheme: {}
   NowPlayingHelper:
     type: framework
@@ -75,4 +81,4 @@ targets:
         DEFINES_MODULE: NO
         SKIP_INSTALL: YES
         CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
+        CODE_SIGN_IDENTITY: "Liland Local Signing"

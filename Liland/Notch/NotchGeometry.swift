@@ -5,6 +5,7 @@ enum NotchMode: Equatable {
     case compact
     case open
     case openAdvanced
+    case openDJ
     /// Hovered without a track (Spotify closed, nothing playing, no permission).
     case openMessage
 
@@ -14,7 +15,7 @@ enum NotchMode: Equatable {
         switch self {
         case .idle: (6, 10)
         case .compact: (6, 12)
-        case .open, .openAdvanced: (18, 28)
+        case .open, .openAdvanced, .openDJ: (18, 28)
         case .openMessage: (16, 24)
         }
     }
@@ -30,6 +31,7 @@ struct NotchGeometry: Equatable {
     static let openContentHeight: CGFloat = 140
     static let soundControlsHeight: CGFloat = 132
     static let messageContentHeight: CGFloat = 70
+    static let djContentHeight: CGFloat = 214
     /// The panel is fixed at this size; the island animates inside it.
     static let windowSize = CGSize(width: 640, height: 400)
 
@@ -57,6 +59,8 @@ struct NotchGeometry: Equatable {
             CGSize(width: Self.openWidth, height: notchSize.height + Self.openContentHeight + Self.soundControlsHeight)
         case .openMessage:
             CGSize(width: Self.openWidth, height: notchSize.height + Self.messageContentHeight)
+        case .openDJ:
+            CGSize(width: Self.openWidth, height: notchSize.height + Self.djContentHeight)
         }
     }
 

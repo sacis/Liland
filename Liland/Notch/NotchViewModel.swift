@@ -19,6 +19,9 @@ final class NotchViewModel {
     }
 
     var mode: NotchMode {
+        if nowPlaying.dj.isActive {
+            return status == .open ? .openDJ : nowPlaying.dj.isPlaying ? .compact : .idle
+        }
         let hasTrack = nowPlaying.track != nil
         switch status {
         case .open:

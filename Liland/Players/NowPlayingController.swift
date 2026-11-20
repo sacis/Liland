@@ -8,7 +8,8 @@ final class NowPlayingController {
 
     let players: [any MusicPlayer]
     let systemPlayer: SystemPlayer
-    let audioLevels = AudioLevelMonitor()
+    let audioLevels: AudioLevelMonitor
+    let dj: DJController
 
     private(set) var activePlayer: (any MusicPlayer)?
     private(set) var artwork: NSImage?
@@ -32,6 +33,9 @@ final class NowPlayingController {
         systemPlayer = SystemPlayer(ignoring: Set(definitions.map(\.bundleIdentifier)))
         // Last, so that on a tie the apps read directly win.
         players = scriptable + [systemPlayer]
+        let levels = AudioLevelMonitor()
+        audioLevels = levels
+        dj = DJController(audioLevels: levels)
     }
 
     func start() {

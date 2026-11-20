@@ -109,6 +109,25 @@ final class ProcessAudioTap {
         }
     }
 
+    /// Whether the process is sending sound out right now (also while a tap mutes it).
+    static func isPlayingAudio(pid: pid_t) -> Bool {
+        guard let process = process(pid: pid) else { return false }
+        var running: UInt32 = 0
+        return process.read(kAudioProcessPropertyIsRunningOutput, into: &running) && running != 0
+    }
+
+    /// Only exists once the process has opened its audio.
+    static func process(pid: pid_t) -> AudioObjectID? {
+        var pid = pid
+        var process = AudioObjectID(kAudioObjectUnknown)
+        var address = AudioObjectID.address(kAudioHardwarePropertyTranslatePIDToProcessObject)
+        var size = UInt32(MemoryLayout<AudioObjectID>.size)
+        let status = AudioObjectGetPropertyData(
+            .system, &address, UInt32(MemoryLayout<pid_t>.size), &pid, &size, &process
+        )
+        return status == noErr && process != kAudioObjectUnknown ? process : nil
+    }
+
     static var defaultOutputDeviceUID: String? {
         defaultOutputDevice?.string(kAudioDevicePropertyDeviceUID)
     }
@@ -139,7 +158,7 @@ final class ProcessAudioTap {
         return Double(frames + streamLatency) / sampleRate
     }
 
-    private static var defaultOutputDevice: AudioObjectID? {
+    static var defaultOutputDevice: AudioObjectID? {
         var device = AudioObjectID(kAudioObjectUnknown)
         guard AudioObjectID.system.read(kAudioHardwarePropertyDefaultOutputDevice, into: &device),
               device != kAudioObjectUnknown
@@ -148,7 +167,7 @@ final class ProcessAudioTap {
     }
 }
 
-private extension AudioObjectID {
+extension AudioObjectID {
     static let system = AudioObjectID(kAudioObjectSystemObject)
 
     static func address(
