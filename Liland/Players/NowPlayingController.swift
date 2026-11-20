@@ -25,6 +25,7 @@ final class NowPlayingController {
     @ObservationIgnored private var lastSeen: [String: Seen] = [:]
     @ObservationIgnored private var lastActivity: [String: Date] = [:]
     @ObservationIgnored private var artworkKey: String?
+    @ObservationIgnored private var isLoadingArtwork = false
     @ObservationIgnored private let startDate = Date()
 
     init(scriptable definitions: [PlayerDefinition] = [.spotify, .appleMusic]) {
@@ -43,6 +44,10 @@ final class NowPlayingController {
 
     func refresh() {
         players.filter(\.isInstalled).forEach { $0.refresh() }
+        // A download that failed for good (network down) gets another chance when the island opens.
+        if artwork == nil, !isLoadingArtwork, artworkKey != nil {
+            loadArtwork(key: artworkKey, announce: false)
+        }
     }
 
     // MARK: - State for the views
@@ -116,12 +121,15 @@ final class NowPlayingController {
     private func loadArtwork(key: String?, announce: Bool) {
         artwork = nil
         accentColor = Self.defaultAccent
+        isLoadingArtwork = false
         guard key != nil, let player = activePlayer, let track = player.snapshot?.track else { return }
+        isLoadingArtwork = true
 
         // Some players deliver the artwork more than once; announce the song only the first time.
         var announce = announce
         player.loadArtwork(for: track) { [weak self] image in
             guard let self, self.artworkKey == key else { return }
+            self.isLoadingArtwork = false
             self.artwork = image
             self.accentColor = image.flatMap(ArtworkColor.accent(for:)).map(Color.init(nsColor:)) ?? Self.defaultAccent
             if announce {

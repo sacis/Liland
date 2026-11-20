@@ -64,7 +64,7 @@ struct ExpandedPlayerView: View {
             Spacer(minLength: 8)
 
             EqualizerView(isPlaying: nowPlaying.isPlaying, color: nowPlaying.accentColor, live: nowPlaying.audioLevels.live)
-                .frame(width: 22, height: 18)
+                .frame(width: 22, height: 24)
         }
     }
 

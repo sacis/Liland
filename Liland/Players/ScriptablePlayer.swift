@@ -161,10 +161,7 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
 
     func loadArtwork(for track: NowPlayingTrack, completion: @escaping (NSImage?) -> Void) {
         if let url = track.artworkURL {
-            URLSession.shared.dataTask(with: url) { data, _, _ in
-                let image = data.flatMap(NSImage.init(data:))
-                DispatchQueue.main.async { completion(image) }
-            }.resume()
+            Self.downloadArtwork(url, retryDelays: Self.artworkRetryDelays[...], completion: completion)
         } else {
             let script = definition.artworkDataScript
             queue.async {
@@ -173,6 +170,26 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
                 DispatchQueue.main.async { completion(image) }
             }
         }
+    }
+
+    /// Seconds before each new try of a failed artwork download.
+    private static let artworkRetryDelays: [TimeInterval] = [1, 3]
+
+    /// A fresh connection each try: a broken one kept for reuse can otherwise fail every time.
+    private static func downloadArtwork(_ url: URL, retryDelays: ArraySlice<TimeInterval>, completion: @escaping (NSImage?) -> Void) {
+        let session = URLSession(configuration: .ephemeral)
+        session.dataTask(with: url) { data, _, error in
+            session.finishTasksAndInvalidate()
+            let image = data.flatMap(NSImage.init(data:))
+            if image == nil, let delay = retryDelays.first {
+                NSLog("Liland: artwork download failed (%@), trying again in %.0f s", error?.localizedDescription ?? "not an image", delay)
+                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                    downloadArtwork(url, retryDelays: retryDelays.dropFirst(), completion: completion)
+                }
+                return
+            }
+            DispatchQueue.main.async { completion(image) }
+        }.resume()
     }
 
     // MARK: - Commands

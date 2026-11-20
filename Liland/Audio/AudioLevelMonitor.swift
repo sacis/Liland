@@ -4,7 +4,7 @@ import Observation
 /// `live` is nil when live audio isn't available (option off, denied, before macOS 14.4, nothing playing).
 @Observable
 final class AudioLevelMonitor {
-    private static let analysisLatency: TimeInterval = 0.02 // one Core Audio buffer + half the analysis window
+    private static let analysisLatency: TimeInterval = 0.04 // one Core Audio buffer + band filters + spring
 
     private(set) var live: LiveLevels?
     private(set) var permission = AudioCapturePermission.Status.unknown

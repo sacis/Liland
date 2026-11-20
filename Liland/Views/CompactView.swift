@@ -10,7 +10,7 @@ struct CompactView: View {
                 .frame(width: 20, height: 20)
             Spacer(minLength: notchWidth)
             EqualizerView(isPlaying: nowPlaying.isPlaying, color: nowPlaying.accentColor, live: nowPlaying.audioLevels.live)
-                .frame(width: 18, height: 13)
+                .frame(width: 18, height: 14)
         }
         .padding(.horizontal, 10)
     }
