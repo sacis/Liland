@@ -38,7 +38,8 @@
 "Reset" = "Sıfırla";
 "Allow audio access to adjust the sound" = "Sesi ayarlamak için ses erişimine izin verin";
 "DJ Mode" = "DJ Modu";
-"Exit DJ Mode" = "DJ Modundan Çık";
+"Mix Songs" = "Şarkıları Miksle";
+"Stop Mixing" = "Mikslemeyi Bitir";
 "Swap" = "Değiştir";
 "Listening…" = "Dinleniyor…";
 "In Sync" = "Senkronize";

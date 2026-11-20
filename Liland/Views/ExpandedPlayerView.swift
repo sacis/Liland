@@ -4,6 +4,8 @@ struct ExpandedPlayerView: View {
     let viewModel: NotchViewModel
     var showsSoundControls = false
 
+    @AppStorage(Preferences.djMode) private var djMode = false
+
     private var nowPlaying: NowPlayingController { viewModel.nowPlaying }
 
     var body: some View {
@@ -32,7 +34,7 @@ struct ExpandedPlayerView: View {
                 .font(.system(size: 11, weight: .medium))
                 .foregroundStyle(.white.opacity(0.5))
             Spacer()
-            if DJController.isSupported && nowPlaying.activePlayer?.id == SpotifyInstance.bundleIdentifier {
+            if djMode && DJController.isSupported && nowPlaying.activePlayer?.id == SpotifyInstance.bundleIdentifier {
                 Button(action: nowPlaying.dj.enter) {
                     Image(systemName: "dial.medium")
                         .font(.system(size: 12, weight: .semibold))
@@ -41,7 +43,7 @@ struct ExpandedPlayerView: View {
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .help("DJ Mode")
+                .help("Mix Songs")
             }
             if let player = nowPlaying.activePlayer, let icon = player.icon {
                 Button { player.open() } label: {

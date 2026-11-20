@@ -38,7 +38,8 @@
 "Reset" = "Herstel";
 "Allow audio access to adjust the sound" = "Geef toegang tot audio om het geluid aan te passen";
 "DJ Mode" = "DJ-modus";
-"Exit DJ Mode" = "Stop DJ-modus";
+"Mix Songs" = "Nummers mixen";
+"Stop Mixing" = "Stoppen met mixen";
 "Swap" = "Wissel";
 "Listening…" = "Luistert…";
 "In Sync" = "Synchroon";

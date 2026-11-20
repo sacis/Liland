@@ -38,7 +38,8 @@
 "Reset" = "Palauta";
 "Allow audio access to adjust the sound" = "Salli äänen käyttö säätääksesi ääntä";
 "DJ Mode" = "DJ-tila";
-"Exit DJ Mode" = "Poistu DJ-tilasta";
+"Mix Songs" = "Miksaa kappaleita";
+"Stop Mixing" = "Lopeta miksaus";
 "Swap" = "Vaihda";
 "Listening…" = "Kuunnellaan…";
 "In Sync" = "Tahdissa";

@@ -18,6 +18,7 @@ private struct MenuContent: View {
 
     @AppStorage(Preferences.peekOnTrackChange) private var peekOnTrackChange = false
     @AppStorage(Preferences.openOnClick) private var openOnClick = false
+    @AppStorage(Preferences.djMode) private var djMode = false
     @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     private var audioLevels: AudioLevelMonitor { nowPlaying.audioLevels }
@@ -46,11 +47,10 @@ private struct MenuContent: View {
             }
         }
         if DJController.isSupported {
-            Toggle("DJ Mode", isOn: Binding {
-                nowPlaying.dj.isActive
-            } set: { isOn in
-                if isOn { nowPlaying.dj.enter() } else { nowPlaying.dj.exit() }
-            })
+            Toggle("DJ Mode", isOn: $djMode)
+                .onChange(of: djMode) { _, isOn in
+                    if !isOn { nowPlaying.dj.exit() }
+                }
         }
         Toggle("Open at Login", isOn: $launchAtLogin)
             .onChange(of: launchAtLogin) { _, enabled in

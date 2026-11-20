@@ -38,7 +38,8 @@
 "Reset" = "Скинути";
 "Allow audio access to adjust the sound" = "Дозвольте доступ до звуку, щоб налаштувати його";
 "DJ Mode" = "Режим діджея";
-"Exit DJ Mode" = "Вийти з режиму діджея";
+"Mix Songs" = "Змішати пісні";
+"Stop Mixing" = "Завершити змішування";
 "Swap" = "Поміняти";
 "Listening…" = "Слухаю…";
 "In Sync" = "Синхронно";

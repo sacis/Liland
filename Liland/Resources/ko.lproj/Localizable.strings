@@ -38,7 +38,8 @@
 "Reset" = "재설정";
 "Allow audio access to adjust the sound" = "소리를 조절하려면 오디오 접근을 허용하세요";
 "DJ Mode" = "DJ 모드";
-"Exit DJ Mode" = "DJ 모드 끝내기";
+"Mix Songs" = "노래 믹스하기";
+"Stop Mixing" = "믹스 끝내기";
 "Swap" = "바꾸기";
 "Listening…" = "듣는 중…";
 "In Sync" = "싱크 맞춤";

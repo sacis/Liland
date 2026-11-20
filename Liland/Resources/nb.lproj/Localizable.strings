@@ -38,7 +38,8 @@
 "Reset" = "Tilbakestill";
 "Allow audio access to adjust the sound" = "Gi tilgang til lyd for å justere lyden";
 "DJ Mode" = "DJ-modus";
-"Exit DJ Mode" = "Avslutt DJ-modus";
+"Mix Songs" = "Miks sanger";
+"Stop Mixing" = "Stopp miksingen";
 "Swap" = "Bytt";
 "Listening…" = "Lytter …";
 "In Sync" = "Synkronisert";

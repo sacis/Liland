@@ -38,7 +38,8 @@
 "Reset" = "リセット";
 "Allow audio access to adjust the sound" = "サウンドを調整するにはオーディオへのアクセスを許可してください";
 "DJ Mode" = "DJモード";
-"Exit DJ Mode" = "DJモードを終了";
+"Mix Songs" = "曲をミックス";
+"Stop Mixing" = "ミックスを終了";
 "Swap" = "入れ替え";
 "Listening…" = "聴いています…";
 "In Sync" = "同期中";

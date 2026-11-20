@@ -7,6 +7,8 @@ enum Preferences {
     static let equalizerFollowsMusic = "equalizerFollowsMusic"
     static let advanced = "advanced"
     static let audioAdjustments = "audioAdjustments"
+    /// Shows the button that starts mixing next to Spotify; mixing itself starts only from that button.
+    static let djMode = "djMode"
 
     static var shouldPeekOnTrackChange: Bool {
         UserDefaults.standard.object(forKey: peekOnTrackChange) as? Bool ?? false

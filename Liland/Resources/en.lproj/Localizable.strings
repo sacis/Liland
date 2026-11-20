@@ -38,7 +38,8 @@
 "Reset" = "Reset";
 "Allow audio access to adjust the sound" = "Allow audio access to adjust the sound";
 "DJ Mode" = "DJ Mode";
-"Exit DJ Mode" = "Exit DJ Mode";
+"Mix Songs" = "Mix Songs";
+"Stop Mixing" = "Stop Mixing";
 "Swap" = "Swap";
 "Listening…" = "Listening…";
 "In Sync" = "In Sync";

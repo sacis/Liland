@@ -47,7 +47,7 @@ struct DJView: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            .help("Exit DJ Mode")
+            .help("Stop Mixing")
         }
         .padding(.horizontal, 22)
     }

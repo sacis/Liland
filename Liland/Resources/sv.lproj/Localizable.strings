@@ -38,7 +38,8 @@
 "Reset" = "Återställ";
 "Allow audio access to adjust the sound" = "Ge tillgång till ljud för att justera ljudet";
 "DJ Mode" = "DJ-läge";
-"Exit DJ Mode" = "Avsluta DJ-läge";
+"Mix Songs" = "Mixa låtar";
+"Stop Mixing" = "Sluta mixa";
 "Swap" = "Byt";
 "Listening…" = "Lyssnar…";
 "In Sync" = "Synkat";

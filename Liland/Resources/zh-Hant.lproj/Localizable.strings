@@ -38,7 +38,8 @@
 "Reset" = "重置";
 "Allow audio access to adjust the sound" = "允許取用音訊以調整聲音";
 "DJ Mode" = "DJ 模式";
-"Exit DJ Mode" = "結束 DJ 模式";
+"Mix Songs" = "混合歌曲";
+"Stop Mixing" = "停止混合";
 "Swap" = "互換";
 "Listening…" = "正在聆聽…";
 "In Sync" = "已同步";

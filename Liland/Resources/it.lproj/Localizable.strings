@@ -38,7 +38,8 @@
 "Reset" = "Ripristina";
 "Allow audio access to adjust the sound" = "Consenti l’accesso all’audio per regolare il suono";
 "DJ Mode" = "Modalità DJ";
-"Exit DJ Mode" = "Esci dalla modalità DJ";
+"Mix Songs" = "Mixa i brani";
+"Stop Mixing" = "Smetti di mixare";
 "Swap" = "Scambia";
 "Listening…" = "In ascolto…";
 "In Sync" = "In sincrono";
