@@ -24,7 +24,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
     init(definition: PlayerDefinition) {
         self.definition = definition
         appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: definition.bundleIdentifier)
-        // The Finder name is localized ("Música", "Musique"…).
         displayName = appURL.map { url in
             let name = FileManager.default.displayName(atPath: url.path)
             return name.hasSuffix(".app") ? String(name.dropLast(4)) : name
@@ -56,7 +55,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
             self.applyNotRunning()
         }
 
-        // Polls even when the app seems closed: if that was misread, the next poll fixes it.
         pollTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.refresh()
         }
@@ -121,7 +119,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
         )
         return PlayerSnapshot(
             track: track,
-            // Apple Music also reports "fast forwarding" and "rewinding".
             isPlaying: state != "paused",
             position: output.atIndex(7)?.doubleValue ?? 0,
             positionDate: Date(),
@@ -141,7 +138,6 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
     }
 
     private func handlePlaybackNotification(_ note: Notification) {
-        // Both apps send "Player State": update play/pause now and let the script fill in the rest.
         if let state = note.userInfo?["Player State"] as? String, var snapshot {
             snapshot.position = snapshot.elapsed(at: Date())
             snapshot.positionDate = Date()
@@ -172,10 +168,8 @@ final class ScriptablePlayer: MusicPlayer, Identifiable {
         }
     }
 
-    /// Seconds before each new try of a failed artwork download.
     private static let artworkRetryDelays: [TimeInterval] = [1, 3]
 
-    /// A fresh connection each try: a broken one kept for reuse can otherwise fail every time.
     private static func downloadArtwork(_ url: URL, retryDelays: ArraySlice<TimeInterval>, completion: @escaping (NSImage?) -> Void) {
         let session = URLSession(configuration: .ephemeral)
         session.dataTask(with: url) { data, _, error in

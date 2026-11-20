@@ -65,7 +65,6 @@ static void loadMediaRemote(void) {
 #pragma mark - Stream
 
 static dispatch_queue_t queue;
-/// Bumped on every refresh, so a slow earlier refresh can't overwrite a newer one.
 static uint64_t generation;
 static BOOL refreshScheduled;
 static NSDictionary *lastState;
@@ -115,7 +114,6 @@ static void publish(int pid, BOOL playing, NSString *parentBundleIdentifier, NSD
 
         artwork = info[@"kMRMediaRemoteNowPlayingInfoArtworkData"];
         if (![artwork isKindOfClass:NSData.class]) artwork = nil;
-        // MediaRemote often drops the artwork for a moment and loads it again.
         if (!artwork && isSameTrack(state, lastState)) artwork = lastArtwork;
     }
 
@@ -151,7 +149,6 @@ static void refresh(void) {
     });
     dispatch_group_enter(group);
     MR.getNowPlayingClient(queue, ^(id client) {
-      // In a browser the media comes from a helper process; this names the browser itself.
       if ([client respondsToSelector:@selector(parentApplicationBundleIdentifier)]) {
           id value = [(id<MRClient>)client parentApplicationBundleIdentifier];
           if ([value isKindOfClass:NSString.class]) parentBundleIdentifier = value;
@@ -184,7 +181,6 @@ EXPORT void liland_stream(void) {
     loadMediaRemote();
     queue = dispatch_queue_create("Liland.NowPlayingHelper", DISPATCH_QUEUE_SERIAL);
 
-    // Quit with Liland, even if it crashes before it can stop the helper.
     pid_t parent = getppid();
     if (parent <= 1) exit(0);
     dispatch_source_t parentExit = dispatch_source_create(DISPATCH_SOURCE_TYPE_PROC, (uintptr_t)parent, DISPATCH_PROC_EXIT, queue);
@@ -211,7 +207,6 @@ EXPORT void liland_stream(void) {
 
 #pragma mark - Commands
 
-/// MediaRemote delivers commands asynchronously; one more round trip ensures this one went out.
 static void waitForDelivery(void) {
     dispatch_semaphore_t done = dispatch_semaphore_create(0);
     MR.getNowPlayingApplicationPID(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^(int pid) {

@@ -1,7 +1,6 @@
 import Foundation
 
 struct AudioAdjustments: Equatable, Codable {
-    /// Case order is the button order. Without stems it's an estimate, not a clean separation.
     enum Part: String, CaseIterable, Codable {
         case vocals, guitar, bass, drums
     }
@@ -13,8 +12,8 @@ struct AudioAdjustments: Equatable, Codable {
     static let pitchRange: ClosedRange<Int> = -6...6
 
     var isolated: Set<Part> = []
-    var gains = [Float](repeating: 0, count: AudioAdjustments.bands.count) // dB
-    var pitch = 0 // semitones
+    var gains = [Float](repeating: 0, count: AudioAdjustments.bands.count)
+    var pitch = 0
 
     static let neutral = AudioAdjustments()
 
@@ -29,7 +28,6 @@ struct AudioAdjustments: Equatable, Codable {
     }
 
     mutating func setGain(_ gain: Float, for band: Int) {
-        // Settings saved by a version with fewer bands are filled in flat.
         while gains.count < Self.bands.count { gains.append(0) }
         gains[band] = min(max(gain, Self.gainRange.lowerBound), Self.gainRange.upperBound)
     }
@@ -40,7 +38,6 @@ extension AudioAdjustments {
         case isolated, gains, pitch
     }
 
-    /// Missing or unknown values (like settings from an older version) fall back to neutral.
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         isolated = (try? container.decodeIfPresent(Set<Part>.self, forKey: .isolated)) ?? []

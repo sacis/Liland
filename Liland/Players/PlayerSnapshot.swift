@@ -5,7 +5,6 @@ struct NowPlayingTrack: Equatable {
     let title: String
     let artist: String
     let album: String
-    /// Zero for live streams such as radio stations.
     let duration: TimeInterval
     let artworkURL: URL?
 }

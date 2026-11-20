@@ -13,7 +13,6 @@ protocol MusicPlayer: AnyObject {
 
     func start()
     func refresh()
-    /// May call `completion` again for the same track when better artwork arrives.
     func loadArtwork(for track: NowPlayingTrack, completion: @escaping (NSImage?) -> Void)
     func playPause()
     func nextTrack()

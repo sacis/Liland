@@ -3,24 +3,21 @@ import AVFoundation
 import CoreML
 import os
 
-/// HTDemucs stem splitter on Core ML (GPU); HTDemucs6s masks the guitar out of "other".
-/// Networks run on their own thread; parts come out `latency` late. Not thread-safe.
+/// Not thread-safe.
 final class DemucsSplitter {
     typealias Parts = StemSplitter.Parts
 
     fileprivate static let rate: Double = 44_100
     fileprivate static let fftSize = 4096
     fileprivate static let fftHop = 1024
-    fileprivate static let bins = 2048 // top frequency dropped
-    fileprivate static let hop = 4096 // 93 ms between network runs
-    fileprivate static let ahead = 4096 // 93 ms of lookahead
-    fileprivate static let fade = 1024 // 23 ms crossfade
-    /// Seconds of inference slack: on M5 ~30 ms for HTDemucs, ~45 ms with guitar, up to 70 ms under GPU load.
+    fileprivate static let bins = 2048
+    fileprivate static let hop = 4096
+    fileprivate static let ahead = 4096
+    fileprivate static let fade = 1024
     fileprivate static let margin = 0.1
-    fileprivate static let partCount = 4 // vocals, bass, drums, guitar (bits of Parts)
-    private static let ramp = 256 // samples; fades around gaps so they don't click
+    fileprivate static let partCount = 4
+    private static let ramp = 256
 
-    /// Intel Macs fall back to `StemSplitter`.
     static var isSupported: Bool {
         #if arch(arm64)
         Network.separating.isBundled
@@ -33,8 +30,8 @@ final class DemucsSplitter {
         isSupported && Network.guitar.isBundled
     }
 
-    let latency: Int // samples
-    private(set) var missed = 0 // samples played silent: parts not ready in time
+    let latency: Int
+    private(set) var missed = 0
 
     private let exchange = Exchange()
     private var written = 0
@@ -42,7 +39,7 @@ final class DemucsSplitter {
     private var produced = 0
     private var origin = 0
     private var hasFailed = false
-    private var gain: Float = 0 // 0...1
+    private var gain: Float = 0
 
     init?(sampleRate: Double) {
         guard sampleRate > 0 else { return nil }
@@ -72,7 +69,7 @@ final class DemucsSplitter {
         }
         let first = written - latency
         written += frames
-        // Real-time thread: never block; if the worker holds the lock it sees this next time.
+        // Real-time thread: never block.
         let written = written, restart = restart, kept = parts.rawValue
         if let state = exchange.state.withLockIfAvailable({ state -> Exchange.State in
             state.written = written
@@ -85,7 +82,6 @@ final class DemucsSplitter {
             hasFailed = state.hasFailed
         }
         exchange.wakeUp.signal()
-        // Model failed: pass the original audio through.
         guard !hasFailed else { return }
 
         let start = max(restart, origin)
@@ -111,16 +107,14 @@ final class DemucsSplitter {
 }
 
 private final class Network {
-    static let separating = Network(name: "HTDemucs", sources: 4, frames: 44) // sources: drums, bass, other, vocals
-    /// Used only for the guitar (its other stems are worse); needs twice the context.
+    static let separating = Network(name: "HTDemucs", sources: 4, frames: 44)
     static let guitar = Network(name: "HTDemucs6s", sources: 6, frames: 88)
 
-    /// Serializes predictions across workers (an old one finishing while a new one starts).
     static let predicting = NSLock()
 
     let name: String
     let sources: Int
-    let frames: Int // spectrogram frames per window
+    let frames: Int
 
     private let lock = NSLock()
     private let loading = NSLock()
@@ -173,12 +167,11 @@ private final class Network {
             return nil
         }
         let configuration = MLModelConfiguration()
-        // On the Neural Engine its normalizations amplify rounding errors and the parts come out wrong.
+        // On the Neural Engine the parts come out wrong.
         configuration.computeUnits = .cpuAndGPU
         do {
             let started = CFAbsoluteTimeGetCurrent()
             let model = try MLModel(contentsOf: url, configuration: configuration)
-            // The first run sets up the GPU and takes seconds; do it now, not on the music.
             let silence = try MLDictionaryFeatureProvider(dictionary: [
                 "spectrum": MLMultiArray(shape: [1, 4, DemucsSplitter.bins, frames].map { $0 as NSNumber }, dataType: .float32),
                 "wave": MLMultiArray(shape: [1, 2, frames * DemucsSplitter.fftHop].map { $0 as NSNumber }, dataType: .float32),
@@ -204,12 +197,11 @@ private final class Exchange {
         var hasFailed = false
     }
 
-    static let capacity = 1 << 18 // samples, ~5 s at 48 kHz
+    static let capacity = 1 << 18
 
     let state = OSAllocatedUnfairLock(initialState: State())
     let wakeUp = DispatchSemaphore(value: 0)
-    let input = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * capacity) // device rate: left, then right
-    /// Device rate, in Parts order: each part's left, then right.
+    let input = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * capacity)
     let output = UnsafeMutableBufferPointer<Float>.allocate(capacity: 2 * DemucsSplitter.partCount * capacity)
 
     init() {
@@ -234,7 +226,7 @@ private final class Worker {
         let regionStart: Int
         let firstFrame: Int
         let lastFrame: Int
-        let rawSpectrum: UnsafeMutableBufferPointer<Float> // unnormalized; the next window reuses most of it
+        let rawSpectrum: UnsafeMutableBufferPointer<Float>
         let spectrum: UnsafeMutableBufferPointer<Float>
         let wave: UnsafeMutableBufferPointer<Float>
         let spectra: UnsafeMutableBufferPointer<Float>
@@ -287,21 +279,19 @@ private final class Worker {
         }
     }
 
-    private static let separatedSources = [3, 1, 0] // HTDemucs vocals, bass, drums
+    private static let separatedSources = [3, 1, 0]
     private static let restSource = 2
     private static let guitarSources = (guitar: 4, piano: 5, rest: 2)
     private static let guitarPart = 3
 
-    private static let musicCapacity = 1 << 17 // samples at the networks' rate
-    private static let chunk = 4096 // device samples
+    private static let musicCapacity = 1 << 17
+    private static let chunk = 4096
     private static let regionLength = Splitter.hop + Splitter.fade
-    /// Frame t starts at t * fftHop - frameOffset; past the edges the music is mirrored, as HTDemucs pads.
     private static let frameOffset = Splitter.fftHop / 2 * 3
     private static let firstInnerFrame = (frameOffset + Splitter.fftHop - 1) / Splitter.fftHop
     private static let frameShift = Splitter.hop / Splitter.fftHop
     private static let timedRuns = 100
-    private static let lateness = Splitter.hop + Int(Splitter.margin * Splitter.rate) // later windows are skipped
-    /// -120 dB: quieter windows are skipped; the answer scales with the input level anyway.
+    private static let lateness = Splitter.hop + Int(Splitter.margin * Splitter.rate)
     private static let silence: Float = 1e-6
 
     private let exchange: Exchange
@@ -310,11 +300,9 @@ private final class Worker {
     private let separating: Run
     private var guitar: Run?
 
-    // Positions at the device's rate.
     private var lastRestart = 0
     private var consumed = 0
     private var produced = 0
-    // Positions at the networks' rate, from where the music started.
     private var heard = 0
     private var nextEnd = 0
 
@@ -324,13 +312,12 @@ private final class Worker {
     private let synthesisWindow: UnsafeMutableBufferPointer<Float>
     private let crossfade: UnsafeMutableBufferPointer<Float>
 
-    private let music: UnsafeMutableBufferPointer<Float> // networks' rate, left then right, ring buffer
+    private let music: UnsafeMutableBufferPointer<Float>
     private let frame: UnsafeMutableBufferPointer<Float>
     private let evenSamples: UnsafeMutableBufferPointer<Float>
     private let oddSamples: UnsafeMutableBufferPointer<Float>
     private let real: UnsafeMutableBufferPointer<Float>
     private let imaginary: UnsafeMutableBufferPointer<Float>
-    /// One frame each: HTDemucs rest, then 6s guitar, piano and rest; and the power of the last three.
     private let slices: UnsafeMutableBufferPointer<Float>
     private let powers: UnsafeMutableBufferPointer<Float>
     private let region: UnsafeMutableBufferPointer<Float>
@@ -364,7 +351,6 @@ private final class Worker {
         for index in 0..<size {
             let hann = 0.5 - 0.5 * cos(2 * .pi * Float(index) / Float(size))
             analysisWindow[index] = hann
-            // iDFT gives size×, HTDemucs scales by √size, squared Hann overlap sums to 1.5: 1/96 total.
             synthesisWindow[index] = hann * Float(size).squareRoot() / (Float(size) * 1.5)
         }
         crossfade = .allocate(capacity: Self.regionLength)
@@ -411,13 +397,11 @@ private final class Worker {
     }
 
     func run() {
-        // HTDemucs loads up front; HTDemucs6s only once the guitar is chosen.
         if let model = Network.separating.loadedModel() {
             warmUp(separating, with: model)
         } else {
             exchange.state.withLock { $0.hasFailed = true }
         }
-        // The music written while it loaded is already late: start from the newest.
         let loaded = exchange.state.withLock { $0 }
         lastRestart = loaded.restart
         start(at: loaded.written)
@@ -431,12 +415,10 @@ private final class Worker {
                 lastRestart = state.restart
                 start(at: state.restart)
             } else if state.written - consumed > Exchange.capacity / 2 {
-                // Seconds behind (the Mac slept): the music left is too old to bother with.
                 start(at: state.written)
             }
             take(upTo: state.written)
             while heard >= nextEnd {
-                // After a GPU stall, skip windows that would come out late so the next one is on time.
                 if heard - nextEnd > Self.lateness {
                     skip()
                 } else {
@@ -449,7 +431,6 @@ private final class Worker {
         }
     }
 
-    /// The first prediction into new buffers is slow, so it's done before the music.
     private func warmUp(_ run: Run, with model: MLModel) {
         Network.predicting.withLock {
             _ = try? model.prediction(from: run.inputs, options: run.options)
@@ -513,7 +494,6 @@ private final class Worker {
         let started = CFAbsoluteTimeGetCurrent()
         region.update(repeating: 0)
 
-        // HTDemucs6s is heard from the next window on: its first run into new buffers is slow.
         var guitar: Run?
         if parts.contains(.guitar) {
             if let run = self.guitar {
@@ -595,26 +575,21 @@ private final class Worker {
         var waveScale = run.waveScale, waveShift = run.waveShift
         for channel in 0..<2 {
             let output = region.baseAddress! + (2 * part + channel) * length
-            // Spectral branch, inverted frame by frame.
             for time in run.firstFrame...run.lastFrame {
                 let realPlane = run.spectra.baseAddress! + (4 * source + 2 * channel) * plane + time
                 vDSP_vsmsa(realPlane, vDSP_Stride(run.frames), &scale, &shift, real.baseAddress!, 1, vDSP_Length(bins))
                 vDSP_vsmsa(realPlane + plane, vDSP_Stride(run.frames), &scale, &shift, imaginary.baseAddress!, 1, vDSP_Length(bins))
-                // That slot holds the top frequency, which the network doesn't make.
                 imaginary[0] = 0
                 overlap(at: time * Splitter.fftHop - Self.frameOffset - run.regionStart, into: output)
             }
-            // Plus the waveform branch.
             let wavePlane = run.waves.baseAddress! + (2 * source + channel) * run.window + run.regionStart
             vDSP_vsmsa(wavePlane, 1, &waveScale, &waveShift, scratch.baseAddress!, 1, vDSP_Length(length))
             vDSP_vadd(scratch.baseAddress!, 1, output, 1, output, 1, vDSP_Length(length))
         }
     }
 
-    /// HTDemucs "other", masked per bin by 6s's guitar / (guitar + piano + rest) power.
     private func renderGuitar(from guitar: Run) {
         let bins = Splitter.bins, length = Self.regionLength
-        // The same moment is this many frames further into the guitar network's longer window.
         let offset = guitar.frames - separating.frames
         let sources = Self.guitarSources
         for channel in 0..<2 {
@@ -631,7 +606,6 @@ private final class Worker {
                     )
                     vDSP_zvmags(&spectrum, 1, powers.baseAddress! + index * bins, 1, vDSP_Length(bins))
                 }
-                // The guitar's power share: rather nothing than a guess where all is silent.
                 var tiny: Float = 1e-20
                 vDSP_vadd(powers.baseAddress! + bins, 1, powers.baseAddress! + 2 * bins, 1, scratch.baseAddress!, 1, vDSP_Length(bins))
                 vDSP_vadd(scratch.baseAddress!, 1, powers.baseAddress!, 1, scratch.baseAddress!, 1, vDSP_Length(bins))
@@ -644,7 +618,6 @@ private final class Worker {
         }
     }
 
-    /// One source frame as a spectrum: its spectrogram plus its waveform branch, transformed.
     private func slice(_ run: Run, source: Int, channel: Int, frame time: Int, into index: Int) {
         guard let forward else { return }
         let bins = Splitter.bins, plane = bins * run.frames
@@ -654,7 +627,6 @@ private final class Worker {
         vDSP_vsmsa(realPlane, vDSP_Stride(run.frames), &scale, &shift, sliceReal, 1, vDSP_Length(bins))
         vDSP_vsmsa(realPlane + plane, vDSP_Stride(run.frames), &scale, &shift, sliceImaginary, 1, vDSP_Length(bins))
 
-        // The frame lies inside the window, so no mirroring past its edges.
         var waveScale = run.waveScale, waveShift = run.waveShift
         let samples = run.waves.baseAddress! + (2 * source + channel) * run.window + time * Splitter.fftHop - Self.frameOffset
         vDSP_vsmsa(samples, 1, &waveScale, &waveShift, frame.baseAddress!, 1, vDSP_Length(Splitter.fftSize))
@@ -667,7 +639,6 @@ private final class Worker {
         var toSpectrogram = 1 / (2 * Float(Splitter.fftSize).squareRoot())
         vDSP_vsma(real.baseAddress!, 1, &toSpectrogram, sliceReal, 1, sliceReal, 1, vDSP_Length(bins))
         vDSP_vsma(imaginary.baseAddress!, 1, &toSpectrogram, sliceImaginary, 1, sliceImaginary, 1, vDSP_Length(bins))
-        // That slot holds the top frequency, which HTDemucs drops.
         sliceImaginary[0] = 0
     }
 
@@ -713,7 +684,6 @@ private final class Worker {
 
         var count = Splitter.hop
         if !fromNetwork.isEmpty {
-            // They all get the same music and come out the same length.
             count = .max
             for (part, converter) in fromNetwork.enumerated() {
                 for channel in 0..<2 {
@@ -739,13 +709,11 @@ private final class Worker {
         produced += count
     }
 
-    /// Planes per channel: real then imaginary, each bins × frames.
     private func transform(_ run: Run, endingAt end: Int) {
         guard let forward else { return }
         let window = run.window, frames = run.frames, size = Splitter.fftSize, bins = Splitter.bins
         let plane = bins * frames
         var scale = 1 / (2 * Float(size).squareRoot())
-        // Inner frames shared with the previous window are shifted over, not recomputed.
         let lastInnerFrame = (window - size + Self.frameOffset) / Splitter.fftHop
         let reused = run.transformedEnd == end - Splitter.hop
             ? Self.firstInnerFrame..<(lastInnerFrame - Self.frameShift + 1) : 0..<0
@@ -774,7 +742,6 @@ private final class Worker {
                     vDSP_ctoz(pairs, 2, &split, 1, vDSP_Length(bins))
                 }
                 vDSP_DFT_Execute(forward, evenSamples.baseAddress!, oddSamples.baseAddress!, real.baseAddress!, imaginary.baseAddress!)
-                // That slot holds the top frequency, which HTDemucs drops.
                 imaginary[0] = 0
                 let realPlane = run.rawSpectrum.baseAddress! + 2 * channel * plane + time
                 vDSP_vsmul(real.baseAddress!, 1, &scale, realPlane, vDSP_Stride(frames), vDSP_Length(bins))
@@ -783,7 +750,6 @@ private final class Worker {
         }
     }
 
-    /// As HTDemucs does before the network; returns deviation and mean to undo it after.
     private static func normalize(_ values: UnsafeMutableBufferPointer<Float>) -> (deviation: Float, mean: Float) {
         let count = vDSP_Length(values.count)
         var mean: Float = 0, meanSquare: Float = 0
@@ -808,10 +774,8 @@ private final class RateConverter {
               let to = AVAudioFormat(standardFormatWithSampleRate: destination, channels: 2),
               let converter = AVAudioConverter(from: from, to: to),
               let input = AVAudioPCMBuffer(pcmFormat: from, frameCapacity: AVAudioFrameCount(frames)),
-              // Room for all of it, so it never holds input back for lack of space.
               let output = AVAudioPCMBuffer(pcmFormat: to, frameCapacity: AVAudioFrameCount(Double(frames) * destination / source * 1.1) + 256)
         else { return nil }
-        // Unprimed, it starts right away and comes out a few samples late, as a stream should.
         converter.primeMethod = .none
         self.converter = converter
         self.input = input

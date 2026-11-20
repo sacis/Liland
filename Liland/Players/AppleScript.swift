@@ -8,7 +8,6 @@ enum AppleScript {
         let code: Int
         let message: String
 
-        /// errAEEventNotPermitted: Automation access denied in System Settings.
         var isPermissionDenied: Bool { code == -1743 }
     }
 

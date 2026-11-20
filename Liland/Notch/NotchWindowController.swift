@@ -1,7 +1,6 @@
 import AppKit
 import SwiftUI
 
-/// The panel ignores the mouse except over the open island; hover comes from NSEvent monitors.
 final class NotchWindowController {
     private let viewModel: NotchViewModel
     private let panel = NotchPanel()
@@ -72,7 +71,6 @@ final class NotchWindowController {
         }
     }
 
-    /// Small margin so the edge of the notch still counts.
     private var hotZone: CGRect {
         viewModel.geometry.screenRect(for: viewModel.mode).insetBy(dx: -4, dy: -4)
     }
@@ -94,7 +92,6 @@ final class NotchWindowController {
         case .closed:
             let isOverNotch = hotZone.contains(location)
             if Preferences.shouldOpenOnClick {
-                // Take the click over the notch so it doesn't fall through to the menu bar.
                 panel.ignoresMouseEvents = !isOverNotch
                 cancelOpen()
             } else {

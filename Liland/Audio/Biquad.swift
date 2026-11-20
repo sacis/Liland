@@ -1,8 +1,6 @@
 import Foundation
 
-/// Audio EQ Cookbook biquad. Safe on the audio thread.
 struct Biquad {
-    /// Butterworth Q: the flattest response, no bump at the corner.
     static let flat = Float(0.5).squareRoot()
 
     private let b0: Float, b1: Float, b2: Float, a1: Float, a2: Float

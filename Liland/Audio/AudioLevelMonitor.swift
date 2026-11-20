@@ -1,10 +1,9 @@
 import Foundation
 import Observation
 
-/// `live` is nil when live audio isn't available (option off, denied, before macOS 14.4, nothing playing).
 @Observable
 final class AudioLevelMonitor {
-    private static let analysisLatency: TimeInterval = 0.04 // one Core Audio buffer + band filters + spring
+    private static let analysisLatency: TimeInterval = 0.04
 
     private(set) var live: LiveLevels?
     private(set) var permission = AudioCapturePermission.Status.unknown
@@ -43,8 +42,8 @@ final class AudioLevelMonitor {
     @ObservationIgnored private var isPlaying = false
     @ObservationIgnored private var tap: AnyObject?
     @ObservationIgnored private var processor: AudioProcessor?
-    @ObservationIgnored private var adjustedSampleRate: Double? // nil when it only listens
-    @ObservationIgnored private var starting: LiveLevels? // until it delivers its first levels
+    @ObservationIgnored private var adjustedSampleRate: Double?
+    @ObservationIgnored private var starting: LiveLevels?
     @ObservationIgnored private var timer: Timer?
     @ObservationIgnored private var hasRequested = false
     @ObservationIgnored private var isRequesting = false
@@ -55,7 +54,6 @@ final class AudioLevelMonitor {
         update()
     }
 
-    /// Re-run every second to notice the permission granted in Settings, player restarts, new outputs.
     private func update() {
         guard isSupported, isEnabled || isAdvanced else {
             stop()
@@ -64,7 +62,6 @@ final class AudioLevelMonitor {
         let status = AudioCapturePermission.status
         if status != permission { permission = status }
 
-        // Adjusting keeps going while paused, so the music comes back already adjusted.
         let needsTap = isPlaying || (isAdvanced && bundleID != nil)
         let needsTimer = needsTap || permission == .denied
         if needsTimer && timer == nil {
@@ -110,7 +107,6 @@ final class AudioLevelMonitor {
             return
         }
         stopTap()
-        // The player may not have opened its audio yet; the timer tries again.
         guard !processes.isEmpty, let outputUID else { return }
 
         adjustedSampleRate = sampleRate

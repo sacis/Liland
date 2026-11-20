@@ -18,7 +18,6 @@ struct PlaybackProgressView: View {
                     bar(fraction: position / duration, duration: duration)
                     timeLabel("-" + Self.format(duration - position))
                 } else {
-                    // Live streams, such as radio stations, have no length to seek in.
                     Capsule().fill(.white.opacity(0.18)).frame(height: 4)
                     Text("Live")
                         .font(.system(size: 11, weight: .semibold))

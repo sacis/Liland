@@ -1,7 +1,6 @@
 import AppKit
 
-/// "System Audio Recording Only". No public API, so this calls the private TCC functions the system uses.
-/// If they're ever missing, starting a tap still makes macOS ask.
+/// No public API: calls the private TCC functions the system uses.
 enum AudioCapturePermission {
     enum Status { case unknown, authorized, denied }
 
@@ -20,7 +19,6 @@ enum AudioCapturePermission {
         }
     }
 
-    /// Calls back on the main queue.
     static func request(_ completion: @escaping (Bool) -> Void) {
         guard let tcc, let symbol = dlsym(tcc, "TCCAccessRequest") else {
             completion(true)

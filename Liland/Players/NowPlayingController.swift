@@ -14,7 +14,6 @@ final class NowPlayingController {
     private(set) var artwork: NSImage?
     private(set) var accentColor = NowPlayingController.defaultAccent
 
-    /// Fires once the new song's artwork has loaded (or failed to), not on the track change itself.
     @ObservationIgnored var onTrackChange: (() -> Void)?
 
     private struct Seen: Equatable {
@@ -31,7 +30,6 @@ final class NowPlayingController {
     init(scriptable definitions: [PlayerDefinition] = [.spotify, .appleMusic]) {
         let scriptable = definitions.map(ScriptablePlayer.init(definition:))
         systemPlayer = SystemPlayer(ignoring: Set(definitions.map(\.bundleIdentifier)))
-        // Last, so that on a tie the apps read directly win.
         players = scriptable + [systemPlayer]
     }
 
@@ -44,7 +42,6 @@ final class NowPlayingController {
 
     func refresh() {
         players.filter(\.isInstalled).forEach { $0.refresh() }
-        // A download that failed for good (network down) gets another chance when the island opens.
         if artwork == nil, !isLoadingArtwork, artworkKey != nil {
             loadArtwork(key: artworkKey, announce: false)
         }
@@ -125,7 +122,6 @@ final class NowPlayingController {
         guard key != nil, let player = activePlayer, let track = player.snapshot?.track else { return }
         isLoadingArtwork = true
 
-        // Some players deliver the artwork more than once; announce the song only the first time.
         var announce = announce
         player.loadArtwork(for: track) { [weak self] image in
             guard let self, self.artworkKey == key else { return }

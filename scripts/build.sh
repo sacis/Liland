@@ -27,7 +27,6 @@ if [[ "${1:-}" == "--install" ]]; then
   echo "✓ Instalado em /Applications/Liland.app"
 elif [[ "${1:-}" == "--release" ]]; then
   rm -f build/Liland.zip
-  # ditto preserva a assinatura e os atributos do bundle (o zip comum pode corromper o .app).
   ditto -c -k --keepParent "$PRODUCT" build/Liland.zip
   echo "✓ build/Liland.zip"
 else

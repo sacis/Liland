@@ -9,7 +9,6 @@ final class NotchViewModel {
     var geometry: NotchGeometry
     let nowPlaying: NowPlayingController
 
-    /// True while the user drags the progress bar, so the island doesn't close mid-drag.
     private(set) var isInteracting = false
     @ObservationIgnored var onInteractionEnded: (() -> Void)?
 

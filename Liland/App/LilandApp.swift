@@ -22,7 +22,6 @@ private struct MenuContent: View {
 
     private var audioLevels: AudioLevelMonitor { nowPlaying.audioLevels }
 
-    /// Turning an audio option on after saying no goes straight to Settings, where it can be allowed.
     private func audioOption(_ option: ReferenceWritableKeyPath<AudioLevelMonitor, Bool>) -> Binding<Bool> {
         Binding {
             audioLevels[keyPath: option]
@@ -36,7 +35,6 @@ private struct MenuContent: View {
 
     var body: some View {
         Toggle("Show When the Song Changes", isOn: $peekOnTrackChange)
-        // The label names the mode the user can switch to, not the current one.
         Button(openOnClick ? "Open on Hover" : "Open Only on Click") { openOnClick.toggle() }
         if audioLevels.isSupported {
             Toggle("Equalizer Follows the Music", isOn: audioOption(\.isEnabled))
@@ -59,7 +57,6 @@ private struct MenuContent: View {
             EmptyView()
         }
         Divider()
-        // Skip the system player: its app is whichever played last (often a browser). Deezer is listed apart.
         ForEach(nowPlaying.players.filter { $0.isInstalled && $0 !== nowPlaying.systemPlayer }, id: \.id) { player in
             Button("Open \(player.displayName)") { player.open() }
         }

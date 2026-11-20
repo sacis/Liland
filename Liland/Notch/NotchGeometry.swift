@@ -5,7 +5,6 @@ enum NotchMode: Equatable {
     case compact
     case open
     case openAdvanced
-    /// Hovered without a track (Spotify closed, nothing playing, no permission).
     case openMessage
 
     var isOpen: Bool { self != .idle && self != .compact }
@@ -30,7 +29,6 @@ struct NotchGeometry: Equatable {
     static let openContentHeight: CGFloat = 140
     static let soundControlsHeight: CGFloat = 132
     static let messageContentHeight: CGFloat = 70
-    /// The panel is fixed at this size; the island animates inside it.
     static let windowSize = CGSize(width: 640, height: 400)
 
     static func current() -> NotchGeometry {
@@ -60,7 +58,6 @@ struct NotchGeometry: Equatable {
         }
     }
 
-    /// The island's rect in global screen coordinates (origin bottom-left).
     func screenRect(for mode: NotchMode) -> CGRect {
         let size = size(for: mode)
         return CGRect(

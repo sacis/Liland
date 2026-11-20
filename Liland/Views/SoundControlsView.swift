@@ -33,7 +33,6 @@ struct SoundControlsView: View {
 
     // MARK: - Isolation
 
-    /// Leaving the last isolated part plays everything again.
     private var isolationRow: some View {
         let isolated = audio.adjustments.isolated
         return HStack(spacing: 6) {

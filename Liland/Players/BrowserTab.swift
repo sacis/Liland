@@ -66,7 +66,6 @@ enum BrowserTab {
         dialects[bundleIdentifier] != nil
     }
 
-    /// Tabs can be retitled late: with no match, media naming an artist counts if a music site is open.
     static func isMusicSite(_ track: NowPlayingTrack, in bundleIdentifier: String) -> Bool? {
         guard let dialect = dialects[bundleIdentifier],
               let tabs = tabs(in: bundleIdentifier, dialect)
@@ -82,7 +81,6 @@ enum BrowserTab {
         musicHosts.contains(where: host.contains)
     }
 
-    /// Title match counts most: browsers report the page title as Now Playing when a site gives none.
     private static func bestTab(for track: NowPlayingTrack, among tabs: [Tab]) -> Tab? {
         var best: (tab: Tab, score: Int)?
         for tab in tabs {

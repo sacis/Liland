@@ -2,8 +2,6 @@
 
 Setup: python3.11 -m venv venv && venv/bin/pip install torch demucs coremltools
 Usage: venv/bin/python tools/convert_htdemucs.py [htdemucs] [htdemucs_6s]
-Only the network: spectrograms and normalization run in DemucsSplitter.swift, in single precision.
-Checked on the GPU: on the Neural Engine rounding errors ruin near-silent bands (~8 dB vs 49 dB).
 """
 
 import os
@@ -20,7 +18,6 @@ from einops import rearrange
 HOP = 1024
 BINS = 2048
 RESOURCES = os.path.join(os.path.dirname(__file__), "..", "Liland", "Resources")
-# name -> (package, spectrogram frames in); 44 frames is ~1 s, 6s needs twice that for the guitar.
 MODELS = {"htdemucs": ("HTDemucs", 44), "htdemucs_6s": ("HTDemucs6s", 88)}
 
 
@@ -30,7 +27,6 @@ class LayerGroupNorm(torch.nn.Module):
     def __init__(self, norm):
         super().__init__()
         self.norm = norm
-        # Demucs's own GroupNorm normalizes (batch, time, channels) over time and channels.
         self.channels_last = type(norm).__name__ == "MyGroupNorm"
 
     def forward(self, x):
@@ -185,7 +181,6 @@ def convert(name, package, frames):
     )
     output = os.path.join(RESOURCES, f"{package}.mlpackage")
     mlmodel.save(output)
-    # Export leftover; nothing in the package refers to it.
     debug = os.path.join(output, "executorch_debug_handle_mapping.json")
     if os.path.exists(debug):
         os.remove(debug)

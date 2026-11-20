@@ -17,7 +17,6 @@ struct NotchRootView: View {
         .frame(width: size.width, height: size.height)
         .clipShape(NotchShape(topRadius: radii.top, bottomRadius: radii.bottom))
         .shadow(color: .black.opacity(mode.isOpen ? 0.5 : 0), radius: 14, y: 6)
-        // Without a hardware notch there is nothing to blend into, so hide when idle.
         .opacity(mode == .idle && !geometry.hasNotch ? 0 : 1)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .animation(.spring(response: 0.42, dampingFraction: 0.8), value: mode)

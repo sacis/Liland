@@ -1,8 +1,5 @@
 #!/usr/bin/perl
-# Runs Liland's Now Playing helper inside Perl, a system program that macOS still lets
-# use MediaRemote (see NowPlayingHelper.m). Adapted from mediaremote-adapter by
-# Jonas van den Berg and contributors (BSD 3-Clause, see LICENSE).
-#
+# Adapted from mediaremote-adapter by Jonas van den Berg and contributors (BSD 3-Clause, see LICENSE).
 # Usage: now-playing.pl /path/to/NowPlayingHelper.framework stream
 #        now-playing.pl /path/to/NowPlayingHelper.framework command NAME [VALUE]
 

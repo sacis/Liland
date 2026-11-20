@@ -28,7 +28,6 @@ final class NotchPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
-/// Lets buttons respond to the first click even though the panel is never key.
 final class NotchHostingView<Content: View>: NSHostingView<Content> {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }

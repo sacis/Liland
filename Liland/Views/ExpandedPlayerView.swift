@@ -94,7 +94,6 @@ struct ExpandedPlayerView: View {
         .frame(height: 30)
     }
 
-    /// Invisible but kept in place when `isOn` is nil, so the main controls stay centered.
     private func modeButton(
         systemName: String,
         isOn: Bool?,

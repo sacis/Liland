@@ -1,6 +1,5 @@
 import Accelerate
 
-/// Real-time split by spectrogram shape (held vs. hit, via median filters) and stereo center; no model.
 /// Not thread-safe: feed it from one thread.
 final class StemSplitter {
     struct Parts: OptionSet {
@@ -8,48 +7,39 @@ final class StemSplitter {
         static let vocals = Parts(rawValue: 1 << 0)
         static let bass = Parts(rawValue: 1 << 1)
         static let drums = Parts(rawValue: 1 << 2)
-        /// Only `DemucsSplitter` keeps it; this splitter can't tell it from the rest.
         static let guitar = Parts(rawValue: 1 << 3)
     }
 
     private static let size = 2048
     private static let hop = 512
     private static let bins = size / 2
-    private static let lookAhead = 8 // frames, ~85 ms at 48 kHz
+    private static let lookAhead = 8
     private static let timeSpan = 2 * lookAhead + 1
     private static let frequencySpan = 17
     private static let bassSharpness: Float = 4
     private static let hitSharpness: Float = 4
-    /// Higher drops side instruments; kept loose for vocals so reverb and backing vocals don't go robotic.
     private static let vocalCenterFocus: Float = 2
-    /// A singer's "s" is dead center; cymbals heard by the overhead mics are spread out.
     private static let consonantCenterFocus: Float = 32
     private static let bassCenterFocus: Float = 6
-    /// Smooths the vocal mask's robotic-sounding flicker; bass and drums are better off without it.
     private static let vocalMemory: Float = 0.7
-    /// A kick's thump is gone within ~100 ms, a bass note lasts: keep what still sounds `lookAhead` later.
     private static let bassSustainFocus: Float = 2
-    /// ~0.75 s: spans a few kicks, yet catches the bass coming back after a break.
     private static let presenceSpan = 70
     private static let presenceMinimum = 24
-    /// dB. Without a steady bass line that owns the lows, only leftovers remain, so it fades out.
     private static let continuityRange: (low: Float, high: Float) = (-18, -13)
     private static let shareRange: (low: Float, high: Float) = (-28, -22)
-    private static let presenceOpening: Float = 0.15 // s
-    private static let presenceClosing: Float = 1 // s
+    private static let presenceOpening: Float = 0.15
+    private static let presenceClosing: Float = 1
 
     private static let slots = lookAhead + 2
 
-    static let latency = size + lookAhead * hop // samples
+    static let latency = size + lookAhead * hop
     private static let fill = size - hop
 
     private let forward = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(size), .FORWARD)
     private let inverse = vDSP_DFT_zrop_CreateSetup(nil, vDSP_Length(size), .INVERSE)
-    /// Square-root Hann, applied before and after, so the overlapping frames add back to the input.
     private let window: UnsafeMutableBufferPointer<Float>
     private let vocalRange: UnsafeMutableBufferPointer<Float>
     private let bassRange: UnsafeMutableBufferPointer<Float>
-    /// A kick's thump is too narrow to stand out across frequencies, so there a hit is a jump over time.
     private let kickRange: UnsafeMutableBufferPointer<Float>
     private let consonantRange: UnsafeMutableBufferPointer<Float>
 
@@ -67,7 +57,6 @@ final class StemSplitter {
     private var position = StemSplitter.fill
     private var frameCount = 0
 
-    /// Mono bass kept apart so the exciter never touches anything else.
     private let bassMasks: UnsafeMutableBufferPointer<Float>
     private let bassReal: UnsafeMutableBufferPointer<Float>
     private let bassImaginary: UnsafeMutableBufferPointer<Float>
@@ -175,7 +164,6 @@ final class StemSplitter {
 
     func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: Parts) {
         let first = channels[0], second = channels[1]
-        // Harmonics would land on a kept voice and sound buzzy, and the voice fills that range anyway.
         let excites = parts.contains(.bass) && !parts.contains(.vocals)
         if excites && !isExciting {
             exciter = BassExciter(sampleRate: sampleRate)
@@ -207,7 +195,6 @@ final class StemSplitter {
     private func processFrame(keeping parts: Parts) {
         guard let forward, let inverse else { return }
         let slots = Self.slots
-        // The newest frame is analyzed; the one `lookAhead` frames older is split and played.
         let newest = (frameCount % slots) * Self.bins
         let splitting = ((frameCount + slots - Self.lookAhead) % slots) * Self.bins
         let before = ((frameCount + slots - Self.lookAhead - 1) % slots) * Self.bins
@@ -242,7 +229,6 @@ final class StemSplitter {
                 }
                 if parts.contains(.bass) {
                     let isHeld = Self.share(of: heldMagnitude, against: hitMagnitude, sharpness: Self.bassSharpness)
-                    // The note may have slid a little by then, so look at the frequencies beside it too.
                     var later: Float = 0
                     for neighbor in max(bin - 1, 0)...min(bin + 1, Self.bins - 1) {
                         later = max(later, history[newestRow + neighbor])
@@ -258,7 +244,6 @@ final class StemSplitter {
                     other += bass
                 }
                 if parts.contains(.vocals) {
-            // Centered non-hits (keeps syllable onsets with the voice), plus centered consonants.
                     vocals = vocalRange[bin] * pow(centers[bin], Self.vocalCenterFocus) * (1 - isHit) + isHit * consonant
                 }
             }
@@ -324,7 +309,6 @@ final class StemSplitter {
         into accumulator: UnsafeMutableBufferPointer<Float>,
         finishing output: UnsafeMutableBufferPointer<Float>
     ) {
-        // The DFT pair scales by 2 × size, and the overlapping windows add up to 2.
         var scale = 1 / Float(Self.size * 4)
         let count = vDSP_Length(Self.size)
         inverseTransform(inverse, real: real, imaginary: imaginary, to: frame)
@@ -340,12 +324,10 @@ final class StemSplitter {
         let left = channels[0], right = channels[1]
         let index = slot + bin
         let real = left.real[index] * left.real[index] + right.real[index] * right.real[index]
-        // The first bin packs the lowest and the highest frequency, both without phase.
         guard bin > 0 else { return real }
         return real + left.imaginary[index] * left.imaginary[index] + right.imaginary[index] * right.imaginary[index]
     }
 
-    /// 1 when both channels match, 0 when one-sided or out of phase; averaged over neighbors.
     private func measureCenters(before: Int, splitting: Int, after: Int) {
         let left = channels[0], right = channels[1]
         for bin in 0..<Self.bins {
@@ -411,7 +393,6 @@ final class StemSplitter {
 
     // MARK: - Transforms
 
-    /// The real-input DFT wants even samples in one array and odd samples in the other.
     private func transform(
         _ setup: vDSP_DFT_Setup,
         from samples: UnsafeMutableBufferPointer<Float>,

@@ -1,7 +1,6 @@
 import AppKit
 import Observation
 
-/// Apps with a `ScriptablePlayer` are skipped so they keep working if Apple closes MediaRemote.
 @Observable
 final class SystemPlayer: MusicPlayer {
     private struct SourceApp: Equatable {
@@ -24,11 +23,8 @@ final class SystemPlayer: MusicPlayer {
     }
 
     private static let artworkWait: TimeInterval = 1.5
-    /// Safari reports some sites (Deezer) as paused while playing; a recently moved position wins.
     private static let positionSilence: TimeInterval = 3
-    /// Shorter media is a notification sound (e.g. WhatsApp Web) taking over Now Playing, not music.
     private static let shortestMedia: TimeInterval = 5
-    /// MediaRemote briefly reports nothing mid-song; an empty state must last this long to count.
     private static let emptyPatience: TimeInterval = 1.5
     private static let approvalPatience: TimeInterval = 600
     private static let workingSystemKey = "systemNowPlayingWorksOn"
@@ -111,7 +107,6 @@ final class SystemPlayer: MusicPlayer {
         access = .ready
     }
 
-    /// In a downloaded copy, a new Liland version brings a new helper that macOS holds for approval.
     private func helperStuck() {
         if let bridge, bridge.isQuarantined {
             UserDefaults.standard.removeObject(forKey: Self.approvedHelperKey)
@@ -180,7 +175,6 @@ final class SystemPlayer: MusicPlayer {
         let shuffleMode = Self.number(state["shuffleMode"]).map(Int.init)
         let elapsed = Self.number(state["elapsedTime"]) ?? 0
         let isReportedPlaying = state["playing"] as? Bool ?? false
-        // A new song can't have moved yet; it carries on from the previous one.
         let wasPlaying = self.snapshot?.isPlaying ?? false
         let isMoving = lastPosition.map { $0.trackID == track.id ? $0.elapsed != elapsed : wasPlaying } ?? false
         lastPosition = (track.id, elapsed)
@@ -236,7 +230,6 @@ final class SystemPlayer: MusicPlayer {
         if recentArtwork.count > 10 { recentArtwork.removeFirst() }
     }
 
-    /// Other media plays over the song, which keeps its place; paused only once that media stops.
     private func otherMediaReported(_ state: [String: Any]) {
         silenceWork?.cancel()
         silenceWork = nil
@@ -315,7 +308,6 @@ final class SystemPlayer: MusicPlayer {
 
     // MARK: - Artwork
 
-    /// The request stays open while its track is current: artwork often arrives late or changes.
     func loadArtwork(for track: NowPlayingTrack, completion: @escaping (NSImage?) -> Void) {
         artworkRequest = (track.id, completion)
         deliveredImage = artworkImage
@@ -329,7 +321,6 @@ final class SystemPlayer: MusicPlayer {
         }
     }
 
-    /// Some sites (Deezer in Safari) never send artwork; artwork the player sends later still wins.
     private func lookUpArtwork(for track: NowPlayingTrack) {
         guard !track.artist.isEmpty, artworkLookups.insert(track.id).inserted else { return }
         if artworkLookups.count > 500 { artworkLookups = [track.id] }
@@ -355,7 +346,6 @@ final class SystemPlayer: MusicPlayer {
         URLSession.shared.dataTask(with: url) { data, _, _ in
             let json = data.flatMap { try? JSONSerialization.jsonObject(with: $0) } as? [String: Any]
             let results = json?["data"] as? [[String: Any]] ?? []
-            // Only the same artist counts (sites may list several, "A, B"); the exact name comes first.
             let covers: [(name: String, cover: String)] = results.compactMap { result in
                 let album = byAlbum ? result : result["album"] as? [String: Any]
                 guard let name = result["title"] as? String,
@@ -403,7 +393,6 @@ final class SystemPlayer: MusicPlayer {
         if shouldPause {
             lastPosition = nil
         } else {
-            // Undone if the song doesn't start, e.g. Safari sent the command to the WhatsApp Web tab instead.
             scheduleSilenceCheck()
         }
         bridge?.send(shouldPause ? .pause : .play)

@@ -14,7 +14,6 @@ enum AlbumLink {
         }
     }
 
-    /// Spotify's AppleScript doesn't name the album, but the track's public page links to it.
     private static func spotifyAlbum(for track: NowPlayingTrack, completion: @escaping (URL?) -> Void) {
         let prefix = "spotify:track:"
         guard track.id.hasPrefix(prefix),
@@ -47,7 +46,6 @@ enum AlbumLink {
             }
             let match = byArtist.first { ($0["collectionName"] as? String)?.caseInsensitiveCompare(track.album) == .orderedSame }
                 ?? byArtist.first
-            // collectionViewUrl points at the song within the album; without its query it's the album.
             guard let link = match?["collectionViewUrl"] as? String,
                   var album = URLComponents(string: link)
             else { return completion(nil) }

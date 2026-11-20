@@ -1,10 +1,8 @@
 import AudioToolbox
 import CoreAudio
 
-/// With a `processor`, the processes are muted and it plays its version instead. Releasing it stops all.
 @available(macOS 14.4, *)
 final class ProcessAudioTap {
-    /// Interleaved samples. Called on a background queue.
     typealias Handler = (_ samples: UnsafeBufferPointer<Float>, _ channels: Int, _ sampleRate: Double) -> Void
 
     let processes: [AudioObjectID]
@@ -26,7 +24,6 @@ final class ProcessAudioTap {
         let description = CATapDescription(stereoMixdownOfProcesses: processes)
         description.uuid = UUID()
         description.isPrivate = true
-        // Muted only while Liland reads the tap, so the music comes back if Liland stops or quits.
         description.muteBehavior = processor == nil ? .unmuted : .mutedWhenTapped
 
         guard AudioHardwareCreateProcessTap(description, &tapID) == noErr else {
@@ -122,7 +119,6 @@ final class ProcessAudioTap {
         return sampleRate
     }
 
-    /// Tap-to-ear latency as the device reports it: a few ms on speakers, much more on Bluetooth.
     static var defaultOutputLatency: TimeInterval? {
         guard let device = defaultOutputDevice, let sampleRate = defaultOutputSampleRate else { return nil }
         let output = kAudioObjectPropertyScopeOutput

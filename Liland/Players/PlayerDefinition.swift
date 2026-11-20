@@ -3,7 +3,6 @@ import Foundation
 struct PlayerDefinition {
     let bundleIdentifier: String
     let notificationName: String
-    /// AppleScript expression, with the current track bound to `t`.
     let trackIDExpression: String
     let artworkURLExpression: String?
     let shuffleProperty: String
@@ -35,7 +34,6 @@ struct PlayerDefinition {
 
     private var app: String { "application id \"\(bundleIdentifier)\"" }
 
-    /// Checks `is running` first so that querying never launches the app.
     var statusScript: String {
         """
         if \(app) is not running then return {"notrunning"}

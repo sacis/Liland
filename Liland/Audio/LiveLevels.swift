@@ -1,7 +1,6 @@
 import Foundation
 import os
 
-/// `delay` holds the bars back by the rest of the trip to the ears (long on Bluetooth).
 final class LiveLevels: Sendable {
     private struct Entry {
         let time: TimeInterval

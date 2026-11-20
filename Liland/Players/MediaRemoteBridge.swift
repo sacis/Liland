@@ -41,7 +41,6 @@ final class MediaRemoteBridge {
         stop()
     }
 
-    /// Unnotarized download: macOS holds the helper until Open Anyway; the flag stays after approval.
     var isQuarantined: Bool {
         let binary = framework.appendingPathComponent("NowPlayingHelper")
         return getxattr(binary.path, "com.apple.quarantine", nil, 0, 0, 0) >= 0
@@ -114,7 +113,6 @@ final class MediaRemoteBridge {
                 guard let message = (try? JSONSerialization.jsonObject(with: line)) as? [String: Any],
                       let state = message["state"] as? [String: Any]
                 else { return }
-                // "artwork" is only sent when it changed; null means there is none.
                 if let value = message["artwork"] {
                     artwork = (value as? String).flatMap { Data(base64Encoded: $0) }
                 }
@@ -139,7 +137,6 @@ final class MediaRemoteBridge {
 
         let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
         NSLog("Liland: Now Playing helper exited with status \(ended.terminationStatus)\(trimmed.isEmpty ? "" : ": \(trimmed)")")
-        // Ending before the first answer (e.g. macOS refused it) isn't worth retrying.
         guard hasOutput else {
             stop()
             onStuck?()
@@ -196,7 +193,6 @@ final class MediaRemoteBridge {
             case .nextTrack: ["nextTrack"]
             case .previousTrack: ["previousTrack"]
             case .seek(let seconds): ["seek", String(max(seconds, 0))]
-            // MediaRemote's shuffle modes: 1 off, 2 albums, 3 songs.
             case .shuffle(let isOn): ["shuffle", isOn ? "3" : "1"]
             case .repeatMode(let mode): ["repeat", String(mode.mediaRemoteValue)]
             }
@@ -229,7 +225,6 @@ final class MediaRemoteBridge {
 }
 
 extension RepeatMode {
-    /// MediaRemote's repeat modes: 1 off, 2 the song, 3 the whole list.
     init?(mediaRemoteValue: Int) {
         switch mediaRemoteValue {
         case 1: self = .off

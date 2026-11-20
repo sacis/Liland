@@ -20,7 +20,6 @@ enum Preferences {
         UserDefaults.standard.object(forKey: equalizerFollowsMusic) as? Bool ?? false
     }
 
-    /// The open island shows the sound controls and Liland plays the music through them.
     static var isAdvanced: Bool {
         UserDefaults.standard.object(forKey: advanced) as? Bool ?? false
     }
