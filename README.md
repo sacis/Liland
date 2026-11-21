@@ -25,6 +25,8 @@
 
 <br>
 
+> *english version at the end of the page → [read in english](#english)*
+
 quando tem música tocando, o notch cresce e mostra a capa do álbum com um equalizador do lado. passando o mouse por cima, ele abre um player com a música, o artista, a barra de progresso e os controles, inclusive aleatório e repetir quando o app informa esses modos.
 
 não precisa fazer login em nada. o liland lê direto do spotify e do app música e, pros outros apps e sites, do que o mac mostra em *tocando agora* na central de controle.
@@ -153,3 +155,150 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 a leitura do deezer e dos navegadores foi adaptada do [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), de jonas van den berg e colaboradores, sob a licença bsd de 3 cláusulas (veja [nowplayinghelper/license](NowPlayingHelper/LICENSE)).
 
 a separação de instrumentos usa o [htdemucs](https://github.com/facebookresearch/demucs) (incluindo o htdemucs_6s, que separa a guitarra), de alexandre défossez, simon rouard e colaboradores da meta ai research, sob a licença mit. os modelos foram convertidos pra core ml pra rodar no próprio mac.
+
+<br>
+
+<a id="english"></a>
+
+<details>
+<summary><b>english version</b></summary>
+<br>
+
+<p align="center">
+  a dynamic island in the macbook notch, to see and control the music that's playing.
+</p>
+
+<p align="center">
+  <sub>macos 14 (sonoma) or newer · in 20 languages · no login</sub>
+</p>
+
+when music is playing, the notch grows and shows the album cover with an equalizer next to it. hover over it and it opens a player with the song, the artist, the progress bar and the controls, including shuffle and repeat when the app reports those modes.
+
+no need to log in to anything. liland reads straight from spotify and the music app and, for other apps and sites, from what the mac shows under *now playing* in control center.
+
+the pink button up top downloads the ready-made app. github's green "code" button only downloads the source code, which isn't what you want.
+
+## ★ installation
+
+requires **macos 14 (sonoma)** or newer. you can check under  › about this mac.
+
+1. [download liland.zip](https://github.com/sacis/Liland/releases/latest/download/Liland.zip). if it doesn't unzip on its own, double-click the file in downloads.
+2. drag **liland** into the **applications** folder.
+3. open liland. since it doesn't come from the app store, the mac shows a warning saying it couldn't verify the app. close the warning **without** clicking *move to trash*.
+4. go to system settings › privacy & security, scroll to the bottom and click **open anyway** next to the message about liland. the mac will ask for your password.
+
+this only needs to be done once. after that liland opens normally and sits in the menu bar, with a capsule icon.
+
+the first time spotify or music is open, macos asks whether liland can control them. just click ok. if you deny it by accident, you can allow it later in system settings › privacy & security › automation.
+
+**to update:** quit liland (capsule icon › quit liland), download the zip again and repeat from step 2. when the mac asks, choose *replace*.
+
+## ★ deezer, youtube and other sites
+
+spotify and apple music work right away. for the rest (deezer, youtube, tidal and anything else playing in the browser), liland uses an extra piece, nowplayinghelper, which the mac asks you to allow the same way as liland itself:
+
+1. with nothing playing, hover over the notch and click **turn on**. you can also do it from the capsule icon, under *turn on deezer and browsers…*.
+2. close the mac's warning about nowplayinghelper, again without moving it to the trash.
+3. system settings opens at privacy & security. scroll to the bottom and click **open anyway** next to nowplayinghelper.
+
+after updating liland, you may sometimes need to repeat this.
+
+why the extra step: since macos 15.4, only apple programs can see what's playing on the system. liland works around this by asking `perl`, which comes preinstalled on the mac, to do the reading. if a macos update closes that loophole, deezer and browsers stop showing up, but spotify and apple music keep working.
+
+## ★ options
+
+they're all in the capsule icon in the menu bar.
+
+**show when the song changes** opens the island for a few seconds when the track changes.
+
+**open only on click** makes the island open only when you click the notch, and no longer when the mouse hovers over it. to go back, use *open on hover*.
+
+**equalizer follows the music** makes the bars follow the actual beat (macos 14.4 or newer). the first time, macos asks permission for liland to access audio. it only measures the sound in the moment, it doesn't record or save anything. if you deny it, the bars keep their usual animation and the menu shows *allow audio access in settings…* so you can allow it later.
+
+**advanced** adds sound controls below the open player (also macos 14.4 or newer, with the same audio permission):
+
+- **vocals**, **guitar**, **bass** and **drums** play only the parts you pick, at the volume of the full song. you can combine more than one. clicking a part again removes it, and removing all of them brings back the full song. guitar only shows up on macs with apple silicon and, since it uses a separate model, takes a moment to kick in when picked.
+- **part volumes**: the button next to ↺ swaps the equalizer for a volume control for each part plus one for **others**, which is the rest of the song (keys, strings, horns…), from 0 to 200%. you can remove the vocals to sing along or turn the bass up to learn it by ear. with any part isolated, the volumes only apply among the chosen parts. the overall volume is still that of the full song.
+- five-band **equalizer**, from lows (80 hz) to highs (10 khz), from −12 to +12 db.
+- **pitch** raises or lowers the song up to 6 semitones without changing the speed.
+- **↺** resets everything. your settings are saved for next time.
+
+with advanced on, liland plays the music, already adjusted, instead of the app. that's why the sound lags a little: about three tenths of a second when isolating parts or changing their volume (an eighth on intel macs) and another tenth when changing pitch. in a video, lips look slightly out of sync with the voice. turn the mode off or quit liland and the sound goes back to coming straight from the app.
+
+<details>
+<summary>how liland separates vocals, guitar, bass and drums</summary>
+<br>
+
+on macs with apple silicon, liland uses htdemucs, a neural network from meta trained on songs recorded part by part. it runs on the mac itself, without sending anything to the internet. vocals, bass and drums come from one model. guitar is the rest of the song in that model, filtered by a second model that recognizes guitar and only runs while it's selected: that way it comes through with its full body. the network needs to hear a chunk of the song to separate it, which is where the three-tenths-of-a-second delay comes from. it's much cleaner than an estimate, but it isn't perfect: in a very busy passage a bit of the other instruments still comes through, and the guitar may bring along a keyboard or synth with a similar sound.
+
+on intel macs, which can't run the network fast enough, the separation is an estimate made on the fly. liland recognizes vocals and bass because they sit in the center of the mix, so instruments that are also in the center still come through a little, and an instrument that sounds a lot like drums (a hard-strummed acoustic guitar, for example) can leak into them.
+
+</details>
+
+there's also **open at login** and **quit liland**. the language follows the mac's.
+
+## ★ building from source
+
+if you'd rather build the app on your mac instead of downloading the ready-made one, the steps are here. at the end, liland is already installed in the applications folder.
+
+<details>
+<summary>see the step by step</summary>
+<br>
+
+first install [xcode from the app store](https://apps.apple.com/app/xcode/id497799835). it's free, but the download is big. when it's done, open xcode once, accept the terms and wait for it to install its components. then you can close it.
+
+now open terminal (<kbd>⌘</kbd> <kbd>space</kbd>, type *terminal* and press <kbd>return</kbd>). for each step below, copy the command, paste it into terminal and press <kbd>return</kbd>, waiting for one to finish before pasting the next. if it asks for a password, it's your mac password. it's normal for nothing to show on screen while you type.
+
+**1.** install homebrew. if you already have it, skip this step.
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+press <kbd>return</kbd> when it asks to continue. if a section called **next steps** with more commands shows up at the end, run those too. then close terminal and open it again.
+
+**2.** install xcodegen.
+
+```bash
+brew install xcodegen
+```
+
+**3.** download and install liland. you can paste all three lines at once.
+
+```bash
+git clone https://github.com/sacis/Liland.git
+cd Liland
+./scripts/build.sh --install
+```
+
+the code goes into a `Liland` folder inside your home folder. the build takes a few minutes and ends with **✓ instalado em /applications/liland.app** ("installed in", in portuguese). liland opens on its own and shows up in the menu bar.
+
+**to update** later:
+
+```bash
+cd ~/Liland
+git pull
+./scripts/build.sh --install
+```
+
+**if something goes wrong**
+
+`command not found: brew` means homebrew didn't finish installing. run the command from step 1 again, and don't forget the **next steps** commands.
+
+`xcodebuild requires Xcode` or `xcode-select: error` means terminal can't find xcode. check that it's in the applications folder and run:
+
+```bash
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+```
+
+`destination path 'Liland' already exists` means you've already downloaded liland before. use the update commands.
+
+</details>
+
+## ★ credits
+
+reading deezer and browsers was adapted from [mediaremote-adapter](https://github.com/ungive/mediaremote-adapter), by jonas van den berg and contributors, under the 3-clause bsd license (see [nowplayinghelper/license](NowPlayingHelper/LICENSE)).
+
+instrument separation uses [htdemucs](https://github.com/facebookresearch/demucs) (including htdemucs_6s, which separates guitar), by alexandre défossez, simon rouard and contributors at meta ai research, under the mit license. the models were converted to core ml to run on the mac itself.
+
+</details>
