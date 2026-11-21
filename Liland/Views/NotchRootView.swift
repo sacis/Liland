@@ -41,6 +41,14 @@ struct NotchRootView: View {
                     alignment: .top
                 )
                 .transition(.islandContent)
+        case .openDevices:
+            OutputDevicesView(viewModel: viewModel)
+                .frame(
+                    width: NotchGeometry.openWidth - mode.cornerRadii.top * 2,
+                    height: viewModel.geometry.size(for: mode).height,
+                    alignment: .top
+                )
+                .transition(.islandContent)
         case .openMessage:
             MessageView(nowPlaying: viewModel.nowPlaying, notchHeight: notch.height)
                 .frame(

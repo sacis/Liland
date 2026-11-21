@@ -10,6 +10,7 @@ final class NotchWindowController {
     private var openWork: DispatchWorkItem?
     private var closeWork: DispatchWorkItem?
     private var peekWork: DispatchWorkItem?
+    private var graceWork: DispatchWorkItem?
     private var isPeeking = false
 
     private static let openDelay: TimeInterval = 0.1
@@ -108,9 +109,14 @@ final class NotchWindowController {
             if !viewModel.isInteracting {
                 panel.ignoresMouseEvents = !islandRect.insetBy(dx: 0, dy: -4).contains(location)
             }
+            let graceLeft = viewModel.closeGraceUntil.timeIntervalSinceNow
             if islandRect.insetBy(dx: -10, dy: -10).contains(location) {
                 cancelClose()
                 endPeek()
+                viewModel.endCloseGrace()
+            } else if graceLeft > 0 {
+                cancelClose()
+                scheduleGraceCheck(after: graceLeft)
             } else if !viewModel.isInteracting && !isPeeking {
                 scheduleClose()
             }
@@ -147,6 +153,16 @@ final class NotchWindowController {
         closeWork = nil
     }
 
+    private func scheduleGraceCheck(after delay: TimeInterval) {
+        guard graceWork == nil else { return }
+        let work = DispatchWorkItem { [weak self] in
+            self?.graceWork = nil
+            self?.handleMouse()
+        }
+        graceWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay + 0.05, execute: work)
+    }
+
     // MARK: - State
 
     private func open() {
@@ -161,6 +177,10 @@ final class NotchWindowController {
         cancelOpen()
         endPeek()
         viewModel.status = .closed
+        viewModel.showsDevices = false
+        viewModel.endCloseGrace()
+        graceWork?.cancel()
+        graceWork = nil
         panel.ignoresMouseEvents = true
     }
 

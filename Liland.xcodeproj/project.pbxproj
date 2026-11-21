@@ -57,6 +57,9 @@
 		F8C6F9722DCB8C5A18CB8DA8 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0BBF6F76E533C83133A2FA59 /* Localizable.strings */; };
 		FBA8DBC2E1A6FFD063AF852C /* AppleScript.swift in Sources */ = {isa = PBXBuildFile; fileRef = D21358E5D764C5D63D0CE150 /* AppleScript.swift */; };
 		FBD7F8A2A05334C0128E5D40 /* ArtworkView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4FF7F79C0D27F92FA2FDE57E /* ArtworkView.swift */; };
+		E208F9D38E2A70D85AFDDFE6 /* SpotifyConnect.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794559AE76FE268732F769D7 /* SpotifyConnect.swift */; };
+		C8C73F0764385603654B6D14 /* OutputDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = C9CBE6A8429054A3BB937607 /* OutputDevices.swift */; };
+		F493573CC0F2B9444018E564 /* OutputDevicesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE261FBE34E64F94F6D0CC1B /* OutputDevicesView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -175,6 +178,9 @@
 		FC4C836897F609BFB1030610 /* pt-PT */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "pt-PT"; path = "pt-PT.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		FEAD58EA9C0B582FE66B13A0 /* LilandApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LilandApp.swift; sourceTree = "<group>"; };
 		FFF411187F55AC20ADDFEF2A /* AudioAdjustments.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioAdjustments.swift; sourceTree = "<group>"; };
+		794559AE76FE268732F769D7 /* SpotifyConnect.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpotifyConnect.swift; sourceTree = "<group>"; };
+		C9CBE6A8429054A3BB937607 /* OutputDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputDevices.swift; sourceTree = "<group>"; };
+		EE261FBE34E64F94F6D0CC1B /* OutputDevicesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OutputDevicesView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -250,6 +256,7 @@
 			isa = PBXGroup;
 			children = (
 				4FF7F79C0D27F92FA2FDE57E /* ArtworkView.swift */,
+				EE261FBE34E64F94F6D0CC1B /* OutputDevicesView.swift */,
 				AFB13F37F9B9EAF58597F240 /* CompactView.swift */,
 				933D4CC8C9F99BE37DECCCB8 /* EqualizerView.swift */,
 				6B24F5112B537B426A38030E /* ExpandedPlayerView.swift */,
@@ -315,6 +322,8 @@
 			isa = PBXGroup;
 			children = (
 				229F1B9E2E088E1EF7BE9F01 /* AlbumLink.swift */,
+				C9CBE6A8429054A3BB937607 /* OutputDevices.swift */,
+				794559AE76FE268732F769D7 /* SpotifyConnect.swift */,
 				D21358E5D764C5D63D0CE150 /* AppleScript.swift */,
 				81A5867E0EE351EAB18FB1EC /* ArtworkColor.swift */,
 				EF61D7CDA1DD2C38D77CC5C8 /* BrowserTab.swift */,
@@ -464,6 +473,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				75C50A1BC6354051834618D1 /* AlbumLink.swift in Sources */,
+				F493573CC0F2B9444018E564 /* OutputDevicesView.swift in Sources */,
+				C8C73F0764385603654B6D14 /* OutputDevices.swift in Sources */,
+				E208F9D38E2A70D85AFDDFE6 /* SpotifyConnect.swift in Sources */,
 				BCE369476FFAEE78AA348C65 /* AppDelegate.swift in Sources */,
 				FBA8DBC2E1A6FFD063AF852C /* AppleScript.swift in Sources */,
 				4B4594F49040A81701D13C43 /* ArtworkColor.swift in Sources */,

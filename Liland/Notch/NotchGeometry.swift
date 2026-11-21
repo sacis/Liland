@@ -6,6 +6,7 @@ enum NotchMode: Equatable {
     case open
     case openAdvanced
     case openMessage
+    case openDevices(rows: Int)
 
     var isOpen: Bool { self != .idle && self != .compact }
 
@@ -13,7 +14,7 @@ enum NotchMode: Equatable {
         switch self {
         case .idle: (6, 10)
         case .compact: (6, 12)
-        case .open, .openAdvanced: (18, 28)
+        case .open, .openAdvanced, .openDevices: (18, 28)
         case .openMessage: (16, 24)
         }
     }
@@ -29,6 +30,11 @@ struct NotchGeometry: Equatable {
     static let openContentHeight: CGFloat = 140
     static let soundControlsHeight: CGFloat = 132
     static let messageContentHeight: CGFloat = 70
+    static let deviceRowHeight: CGFloat = 40
+    static let deviceRowSpacing: CGFloat = 6
+    static let devicesTopPadding: CGFloat = 8
+    static let devicesBottomPadding: CGFloat = 18
+    static let maxVisibleDeviceRows = 5
     static let windowSize = CGSize(width: 640, height: 400)
 
     static func current() -> NotchGeometry {
@@ -55,7 +61,17 @@ struct NotchGeometry: Equatable {
             CGSize(width: Self.openWidth, height: notchSize.height + Self.openContentHeight + Self.soundControlsHeight)
         case .openMessage:
             CGSize(width: Self.openWidth, height: notchSize.height + Self.messageContentHeight)
+        case .openDevices(let rows):
+            CGSize(
+                width: Self.openWidth,
+                height: notchSize.height + Self.devicesTopPadding + Self.devicesListHeight(rows: rows) + Self.devicesBottomPadding
+            )
         }
+    }
+
+    static func devicesListHeight(rows: Int) -> CGFloat {
+        let visible = CGFloat(min(max(rows, 1), maxVisibleDeviceRows))
+        return visible * deviceRowHeight + (visible - 1) * deviceRowSpacing
     }
 
     func screenRect(for mode: NotchMode) -> CGRect {

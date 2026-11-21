@@ -8,6 +8,9 @@ final class NotchViewModel {
     var status: Status = .closed
     var geometry: NotchGeometry
     let nowPlaying: NowPlayingController
+    let outputs = OutputDevices()
+    var showsDevices = false
+    @ObservationIgnored private(set) var closeGraceUntil = Date.distantPast
 
     private(set) var isInteracting = false
     @ObservationIgnored var onInteractionEnded: (() -> Void)?
@@ -22,10 +25,21 @@ final class NotchViewModel {
         switch status {
         case .open:
             guard hasTrack else { return .openMessage }
+            if showsDevices { return .openDevices(rows: outputs.rows) }
             return nowPlaying.audioLevels.isSupported && nowPlaying.audioLevels.isAdvanced ? .openAdvanced : .open
         case .closed:
             return hasTrack && nowPlaying.isPlaying ? .compact : .idle
         }
+    }
+
+    func showDevices() {
+        outputs.load(for: nowPlaying.activePlayer)
+        showsDevices = true
+        closeGraceUntil = Date().addingTimeInterval(2)
+    }
+
+    func endCloseGrace() {
+        closeGraceUntil = .distantPast
     }
 
     func beginInteraction() {

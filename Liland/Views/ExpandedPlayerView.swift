@@ -92,6 +92,17 @@ struct ExpandedPlayerView: View {
             )
         }
         .frame(height: 30)
+        .frame(maxWidth: .infinity)
+        .overlay(alignment: .trailing) {
+            ControlButton(
+                systemName: "airplayaudio",
+                size: 15,
+                help: "Audio Output",
+                color: .white.opacity(0.6),
+                action: viewModel.showDevices
+            )
+            .offset(x: 8)
+        }
     }
 
     private func modeButton(

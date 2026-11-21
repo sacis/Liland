@@ -144,7 +144,7 @@ final class ProcessAudioTap {
     }
 }
 
-private extension AudioObjectID {
+extension AudioObjectID {
     static let system = AudioObjectID(kAudioObjectSystemObject)
 
     static func address(
