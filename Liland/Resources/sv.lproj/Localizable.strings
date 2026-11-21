@@ -37,3 +37,5 @@
 "Raise Pitch" = "Höj tonhöjd";
 "Reset" = "Återställ";
 "Allow audio access to adjust the sound" = "Ge tillgång till ljud för att justera ljudet";
+"Others" = "Övrigt";
+"Part Volumes" = "Volym för varje del";

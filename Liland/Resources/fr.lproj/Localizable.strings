@@ -37,3 +37,5 @@
 "Raise Pitch" = "Monter la tonalité";
 "Reset" = "Réinitialiser";
 "Allow audio access to adjust the sound" = "Autorisez l’accès à l’audio pour régler le son";
+"Others" = "Reste";
+"Part Volumes" = "Volume de chaque partie";

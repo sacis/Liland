@@ -37,3 +37,5 @@
 "Raise Pitch" = "Hæv toneart";
 "Reset" = "Nulstil";
 "Allow audio access to adjust the sound" = "Giv adgang til lyd for at justere lyden";
+"Others" = "Resten";
+"Part Volumes" = "Lydstyrke for hver del";
