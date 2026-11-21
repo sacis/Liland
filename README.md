@@ -71,11 +71,12 @@ ficam todas no ícone de cápsula da barra de menus.
 **avançado** coloca controles de som embaixo do player aberto (também macos 14.4 ou mais novo, com a mesma permissão de áudio):
 
 - **voz**, **guitarra**, **baixo** e **bateria** tocam só as partes que você escolher, no volume da música inteira. dá pra combinar mais de uma. clicar de novo numa parte tira ela, e tirando todas a música volta inteira. a guitarra só aparece nos macs com chip apple e, como usa uma separação à parte, leva um instante pra entrar quando é escolhida.
+- **volume de cada parte**: o botão ao lado do ↺ troca o equalizador por um controle de volume pra cada parte e um pra **outros**, que é o resto da música (teclados, cordas, sopros…), de 0 a 200%. dá pra tirar a voz pra cantar junto ou deixar o baixo mais alto pra tirar de ouvido. com alguma parte isolada, os volumes valem só entre as partes escolhidas. o volume geral continua o da música inteira.
 - **equalizador** de cinco faixas, dos graves (80 hz) aos agudos (10 khz), de −12 a +12 db.
 - **tom** sobe ou desce a música até 6 semitons sem mudar a velocidade.
 - **↺** volta tudo ao normal. os ajustes ficam salvos pra próxima vez.
 
-com o avançado ligado, quem toca a música é o liland, já ajustada, no lugar do app. por isso o som atrasa um pouco: cerca de três décimos de segundo ao isolar partes (um oitavo nos macs com intel) e mais um décimo ao mudar o tom. num vídeo, a boca fica um pouco fora de sincronia com a voz. desligando o modo ou fechando o liland, o som volta direto do app.
+com o avançado ligado, quem toca a música é o liland, já ajustada, no lugar do app. por isso o som atrasa um pouco: cerca de três décimos de segundo ao isolar partes ou mudar o volume delas (um oitavo nos macs com intel) e mais um décimo ao mudar o tom. num vídeo, a boca fica um pouco fora de sincronia com a voz. desligando o modo ou fechando o liland, o som volta direto do app.
 
 <details>
 <summary>como o liland separa voz, guitarra, baixo e bateria</summary>

@@ -12,7 +12,7 @@ final class AudioProcessor {
     private static let pitchFlush = 2 * Int(maximumFrames)
 
     private struct Settings: Equatable {
-        var parts: StemSplitter.Parts = []
+        var levels = PartLevels.full
         var isPitched = false
     }
 
@@ -66,22 +66,41 @@ final class AudioProcessor {
     }
 
     func apply(_ adjustments: AudioAdjustments) {
-        var parts = StemSplitter.Parts()
-        if adjustments.isolated.contains(.vocals) { parts.insert(.vocals) }
-        if adjustments.isolated.contains(.guitar) { parts.insert(.guitar) }
-        if adjustments.isolated.contains(.bass) { parts.insert(.bass) }
-        if adjustments.isolated.contains(.drums) { parts.insert(.drums) }
+        let levels = Self.levels(for: adjustments, separatesGuitar: splitter.separatesGuitar)
 
         for band in AudioAdjustments.bands.indices {
             equalizer.bands[band].gain = adjustments.gain(band)
         }
         let boost = max(0, adjustments.gains.max() ?? 0)
         equalizer.globalGain = -boost / 2
-        limiter.bypass = parts.isEmpty && boost == 0
+        limiter.bypass = levels == .full && boost == 0
 
         timePitch.pitch = Float(adjustments.pitch * 100)
-        let latest = Settings(parts: parts, isPitched: adjustments.pitch != 0)
+        let latest = Settings(levels: levels, isPitched: adjustments.pitch != 0)
         settings.withLock { $0 = latest }
+    }
+
+    private static func levels(for adjustments: AudioAdjustments, separatesGuitar: Bool) -> PartLevels {
+        let soloed = adjustments.isolated
+        func level(_ part: AudioAdjustments.Part) -> Float {
+            soloed.isEmpty || soloed.contains(part) ? adjustments.volume(part) : 0
+        }
+        var levels = PartLevels(
+            vocals: level(.vocals),
+            bass: level(.bass),
+            drums: level(.drums),
+            guitar: level(.guitar),
+            other: soloed.isEmpty ? adjustments.othersVolume : 0
+        )
+        if !separatesGuitar { levels.guitar = levels.other }
+        let loudest = max(levels.vocals, levels.bass, levels.drums, levels.guitar, levels.other)
+        guard loudest > 0 else { return levels }
+        levels.vocals /= loudest
+        levels.bass /= loudest
+        levels.drums /= loudest
+        levels.guitar /= loudest
+        levels.other /= loudest
+        return levels
     }
 
     func render(_ source: AudioBuffer, into destination: UnsafeMutableAudioBufferListPointer) {
@@ -102,7 +121,7 @@ final class AudioProcessor {
                 left[frame] = samples[base]
                 right[frame] = samples[base + min(1, sourceChannels - 1)]
             }
-            if !rendered.parts.isEmpty {
+            if rendered.levels != .full {
                 isolate(left: left, right: right, frames: count)
             }
 
@@ -124,8 +143,9 @@ final class AudioProcessor {
     }
 
     private func update(to latest: Settings) {
-        if latest.parts != rendered.parts {
-            if rendered.parts.isEmpty {
+        let wasSplitting = rendered.levels != .full
+        if latest.levels.layout != rendered.levels.layout || (latest.levels != .full) != wasSplitting {
+            if !wasSplitting {
                 splitter.reset()
                 makeup = 1
             }
@@ -147,7 +167,7 @@ final class AudioProcessor {
 
     private func isolate(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int) {
         let song = songMeter.power(left: left, right: right, frames: frames)
-        splitter.process(left: left, right: right, frames: frames, keeping: rendered.parts)
+        splitter.process(left: left, right: right, frames: frames, levels: rendered.levels)
         let parts = partsMeter.power(left: left, right: right, frames: frames)
 
         let duration = Float(frames) / sampleRate
@@ -199,16 +219,44 @@ final class AudioProcessor {
     }
 }
 
-protocol PartSplitter: AnyObject {
-    var latency: Int { get }
-    func reset()
-    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: StemSplitter.Parts)
+struct PartLevels: Equatable {
+    static let full = PartLevels()
+
+    var vocals: Float = 1
+    var bass: Float = 1
+    var drums: Float = 1
+    var guitar: Float = 1
+    var other: Float = 1
+
+    var lanes: SIMD8<Float> {
+        SIMD8(vocals, bass, drums, guitar, other, 0, 0, 0)
+    }
+
+    var layout: StemSplitter.Parts {
+        var parts = StemSplitter.Parts()
+        if vocals > 0 { parts.insert(.vocals) }
+        if bass > 0 { parts.insert(.bass) }
+        if drums > 0 { parts.insert(.drums) }
+        if guitar != other { parts.insert(.guitar) }
+        if other > 0 { parts.insert(.other) }
+        return parts
+    }
 }
 
-extension DemucsSplitter: PartSplitter {}
+protocol PartSplitter: AnyObject {
+    var latency: Int { get }
+    var separatesGuitar: Bool { get }
+    func reset()
+    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, levels: PartLevels)
+}
+
+extension DemucsSplitter: PartSplitter {
+    var separatesGuitar: Bool { Self.canIsolateGuitar }
+}
 
 extension StemSplitter: PartSplitter {
     var latency: Int { Self.latency }
+    var separatesGuitar: Bool { false }
 }
 
 private final class RenderStage {

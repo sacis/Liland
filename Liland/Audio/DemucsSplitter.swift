@@ -15,7 +15,7 @@ final class DemucsSplitter {
     fileprivate static let ahead = 4096
     fileprivate static let fade = 1024
     fileprivate static let margin = 0.1
-    fileprivate static let partCount = 4
+    fileprivate static let partCount = 5
     private static let ramp = 256
 
     static var isSupported: Bool {
@@ -40,6 +40,7 @@ final class DemucsSplitter {
     private var origin = 0
     private var hasFailed = false
     private var gain: Float = 0
+    private var mix = PartLevels.full.lanes
 
     init?(sampleRate: Double) {
         guard sampleRate > 0 else { return nil }
@@ -60,7 +61,7 @@ final class DemucsSplitter {
         restart = written
     }
 
-    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: Parts) {
+    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, levels: PartLevels) {
         let capacity = Exchange.capacity, wrap = capacity - 1
         for index in 0..<frames {
             let slot = (written + index) & wrap
@@ -70,7 +71,7 @@ final class DemucsSplitter {
         let first = written - latency
         written += frames
         // Real-time thread: never block.
-        let written = written, restart = restart, kept = parts.rawValue
+        let written = written, restart = restart, kept = levels.layout.rawValue
         if let state = exchange.state.withLockIfAvailable({ state -> Exchange.State in
             state.written = written
             state.restart = restart
@@ -86,15 +87,18 @@ final class DemucsSplitter {
 
         let start = max(restart, origin)
         let step = 1 / Float(Self.ramp)
+        let target = levels.lanes
+        let change = (target - mix) / Float(max(frames, 1))
         for index in 0..<frames {
             let position = first + index
+            mix += change
             var leftSum: Float = 0, rightSum: Float = 0
             if position >= start && position < produced {
                 gain = produced - position > Self.ramp ? min(gain + step, 1) : max(gain - step, 0)
                 let slot = position & wrap
-                for part in 0..<Self.partCount where parts.contains(Parts(rawValue: UInt8(1 << part))) {
-                    leftSum += exchange.output[2 * part * capacity + slot]
-                    rightSum += exchange.output[(2 * part + 1) * capacity + slot]
+                for part in 0..<Self.partCount where mix[part] != 0 {
+                    leftSum += mix[part] * exchange.output[2 * part * capacity + slot]
+                    rightSum += mix[part] * exchange.output[(2 * part + 1) * capacity + slot]
                 }
             } else {
                 if position >= start { missed += 1 }
@@ -103,6 +107,7 @@ final class DemucsSplitter {
             left[index] = leftSum * gain
             right[index] = rightSum * gain
         }
+        mix = target
     }
 }
 
@@ -283,6 +288,7 @@ private final class Worker {
     private static let restSource = 2
     private static let guitarSources = (guitar: 4, piano: 5, rest: 2)
     private static let guitarPart = 3
+    private static let restPart = 4
 
     private static let musicCapacity = 1 << 17
     private static let chunk = 4096
@@ -527,6 +533,9 @@ private final class Worker {
                 renderGuitar(from: guitar)
             }
         }
+        if parts.contains(.other) {
+            renderRest(endingAt: end)
+        }
         write()
 
         let elapsed = CFAbsoluteTimeGetCurrent() - started
@@ -614,6 +623,22 @@ private final class Worker {
                 vDSP_vmul(slices.baseAddress!, 1, scratch.baseAddress!, 1, real.baseAddress!, 1, vDSP_Length(bins))
                 vDSP_vmul(slices.baseAddress! + bins, 1, scratch.baseAddress!, 1, imaginary.baseAddress!, 1, vDSP_Length(bins))
                 overlap(at: time * Splitter.fftHop - Self.frameOffset - separating.regionStart, into: output)
+            }
+        }
+    }
+
+    private func renderRest(endingAt end: Int) {
+        let length = Self.regionLength, wrap = Self.musicCapacity - 1
+        let first = end - separating.window + separating.regionStart
+        for channel in 0..<2 {
+            let output = region.baseAddress! + (2 * Self.restPart + channel) * length
+            for index in 0..<length {
+                let position = first + index
+                output[index] = position < 0 ? 0 : music[channel * Self.musicCapacity + (position & wrap)]
+            }
+            for part in 0..<Self.restPart {
+                let stem = region.baseAddress! + (2 * part + channel) * length
+                vDSP_vsub(stem, 1, output, 1, output, 1, vDSP_Length(length))
             }
         }
     }

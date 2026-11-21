@@ -8,6 +8,7 @@ final class StemSplitter {
         static let bass = Parts(rawValue: 1 << 1)
         static let drums = Parts(rawValue: 1 << 2)
         static let guitar = Parts(rawValue: 1 << 3)
+        static let other = Parts(rawValue: 1 << 4)
     }
 
     private static let size = 2048
@@ -81,7 +82,7 @@ final class StemSplitter {
     private let sortScratch: UnsafeMutableBufferPointer<Float>
     private let centers: UnsafeMutableBufferPointer<Float>
     private let vocalMasks: UnsafeMutableBufferPointer<Float>
-    private let otherMasks: UnsafeMutableBufferPointer<Float>
+    private let drumMasks: UnsafeMutableBufferPointer<Float>
 
     init(sampleRate: Double) {
         self.sampleRate = sampleRate
@@ -122,7 +123,7 @@ final class StemSplitter {
         sortScratch = .allocate(capacity: max(Self.timeSpan, Self.frequencySpan))
         centers = .allocate(capacity: Self.bins)
         vocalMasks = .allocate(capacity: Self.bins)
-        otherMasks = .allocate(capacity: Self.bins)
+        drumMasks = .allocate(capacity: Self.bins)
         bassMasks = .allocate(capacity: Self.bins)
         bassReal = .allocate(capacity: Self.bins)
         bassImaginary = .allocate(capacity: Self.bins)
@@ -141,7 +142,7 @@ final class StemSplitter {
              channel.maskedReal, channel.maskedImaginary].forEach { $0.deallocate() }
         }
         [window, vocalRange, bassRange, kickRange, consonantRange, frame, evenSamples, oddSamples, history, sortScratch,
-         centers, vocalMasks, otherMasks, bassMasks, bassReal, bassImaginary, bassAccumulator, bassOutput,
+         centers, vocalMasks, drumMasks, bassMasks, bassReal, bassImaginary, bassAccumulator, bassOutput,
          presenceHistory, presenceScratch]
             .forEach { $0.deallocate() }
     }
@@ -162,9 +163,13 @@ final class StemSplitter {
         position = Self.fill
     }
 
-    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, keeping parts: Parts) {
+    func process(left: UnsafeMutablePointer<Float>, right: UnsafeMutablePointer<Float>, frames: Int, levels: PartLevels) {
         let first = channels[0], second = channels[1]
-        let excites = parts.contains(.bass) && !parts.contains(.vocals)
+        var parts = Parts()
+        if levels.vocals != levels.other { parts.insert(.vocals) }
+        if levels.bass != levels.other { parts.insert(.bass) }
+        if levels.drums != levels.other { parts.insert(.drums) }
+        let excites = levels.bass > 0 && levels.vocals == 0 && levels.other == 0
         if excites && !isExciting {
             exciter = BassExciter(sampleRate: sampleRate)
             bassAccumulator.update(repeating: 0)
@@ -181,18 +186,18 @@ final class StemSplitter {
         for index in 0..<frames {
             first.input[position] = left[index]
             second.input[position] = right[index]
-            let harmonics = excites ? exciter.process(bassOutput[position - Self.fill]) : 0
+            let harmonics = excites ? exciter.process(bassOutput[position - Self.fill]) * levels.bass : 0
             left[index] = first.output[position - Self.fill] + harmonics
             right[index] = second.output[position - Self.fill] + harmonics
             position += 1
             if position == Self.size {
                 position = Self.fill
-                processFrame(keeping: parts)
+                processFrame(keeping: parts, levels: levels)
             }
         }
     }
 
-    private func processFrame(keeping parts: Parts) {
+    private func processFrame(keeping parts: Parts, levels: PartLevels) {
         guard let forward, let inverse else { return }
         let slots = Self.slots
         let newest = (frameCount % slots) * Self.bins
@@ -220,12 +225,12 @@ final class StemSplitter {
             let heldMagnitude = heldMagnitude(at: bin)
             let jump = max(0, history[splittingRow + bin] - heldMagnitude) * kickRange[bin]
             let hitMagnitude = max(hitMagnitude(at: bin, row: splittingRow), jump)
-            var vocals: Float = 0, other: Float = 0, bass: Float = 0
+            var vocals: Float = 0, drums: Float = 0, bass: Float = 0
             if heldMagnitude + hitMagnitude > 1e-10 {
                 let isHit = Self.share(of: hitMagnitude, against: heldMagnitude, sharpness: Self.hitSharpness)
                 let consonant = consonantRange[bin] * pow(centers[bin], Self.consonantCenterFocus)
                 if parts.contains(.drums) {
-                    other += isHit * (1 - consonant)
+                    drums = isHit * (1 - consonant)
                 }
                 if parts.contains(.bass) {
                     let isHeld = Self.share(of: heldMagnitude, against: hitMagnitude, sharpness: Self.bassSharpness)
@@ -241,14 +246,13 @@ final class StemSplitter {
                     foundBass += bass * bass * power
                     low += bassRange[bin] * power
                     bass *= bassPresence
-                    other += bass
                 }
                 if parts.contains(.vocals) {
                     vocals = vocalRange[bin] * pow(centers[bin], Self.vocalCenterFocus) * (1 - isHit) + isHit * consonant
                 }
             }
             vocalMasks[bin] = Self.vocalMemory * vocalMasks[bin] + (1 - Self.vocalMemory) * vocals
-            otherMasks[bin] = other
+            drumMasks[bin] = drums
             bassMasks[bin] = bass
         }
         if parts.contains(.bass) {
@@ -256,7 +260,14 @@ final class StemSplitter {
         }
 
         for bin in 0..<Self.bins {
-            let mask = min(vocalMasks[bin] + otherMasks[bin], 1)
+            let vocals = vocalMasks[bin], drums = drumMasks[bin], bass = bassMasks[bin]
+            let total = vocals + drums + bass
+            let share: Float = total > 1 ? 1 / total : 1
+            let mask = levels.other + share * (
+                (levels.vocals - levels.other) * vocals
+                    + (levels.drums - levels.other) * drums
+                    + (levels.bass - levels.other) * bass
+            )
             for channel in channels {
                 channel.maskedReal[bin] = channel.real[splitting + bin] * mask
                 channel.maskedImaginary[bin] = channel.imaginary[splitting + bin] * mask

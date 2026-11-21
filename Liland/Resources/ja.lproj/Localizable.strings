@@ -37,3 +37,5 @@
 "Raise Pitch" = "キーを上げる";
 "Reset" = "リセット";
 "Allow audio access to adjust the sound" = "サウンドを調整するにはオーディオへのアクセスを許可してください";
+"Others" = "その他";
+"Part Volumes" = "パートごとの音量";

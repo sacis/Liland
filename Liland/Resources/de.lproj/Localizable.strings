@@ -37,3 +37,5 @@
 "Raise Pitch" = "Tonhöhe erhöhen";
 "Reset" = "Zurücksetzen";
 "Allow audio access to adjust the sound" = "Erlaube den Audiozugriff, um den Klang anzupassen";
+"Others" = "Rest";
+"Part Volumes" = "Lautstärke der Spuren";

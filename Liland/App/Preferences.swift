@@ -7,6 +7,7 @@ enum Preferences {
     static let equalizerFollowsMusic = "equalizerFollowsMusic"
     static let advanced = "advanced"
     static let audioAdjustments = "audioAdjustments"
+    static let showsPartVolumes = "showsPartVolumes"
 
     static var shouldPeekOnTrackChange: Bool {
         UserDefaults.standard.object(forKey: peekOnTrackChange) as? Bool ?? false
