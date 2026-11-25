@@ -12,7 +12,7 @@ struct EqualizerView: View {
     private static let phases: [Double] = [0, 1.3, 2.6, 0.7, 2.1, 3.4]
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: live == nil ? 1 / 30 : nil, paused: !isPlaying)) { context in
+        TimelineView(.animation(minimumInterval: live == nil ? 1 / 30 : 1 / 60, paused: !isPlaying)) { context in
             let time = context.date.timeIntervalSinceReferenceDate
             let levels = live?.current
             GeometryReader { proxy in
